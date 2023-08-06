@@ -48,8 +48,8 @@ where
             data,
         }
     }
-    pub fn ok(code: i32, data: Option<T>) -> Self {
-        Self::new(code, "OK".to_string(), true, data)
+    pub fn ok(data: Option<T>) -> Self {
+        Self::new(0, "OK".to_string(), true, data)
     }
 
     pub fn err(code: i32, message: String) -> Self {

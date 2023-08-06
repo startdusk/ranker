@@ -5,6 +5,17 @@ Content-Type: application/json
 
 {
     "topic": "topic",
-    "votes_per_voter": "stirng",
+    "votes_per_voter": 5,
     "name": "name"
 }
+
+### Join a poll
+POST http://127.0.0.1:3000/api/polls/join
+Accept: application/json
+Content-Type: application/json
+
+{
+    "name": "name",
+    "poll_id": "ZR0X7Z"
+}
+
