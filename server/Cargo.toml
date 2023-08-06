@@ -23,3 +23,6 @@ serde_json = "1.0.104"
 thiserror = "1.0.44"
 tokio = { version = "1.29.1", features = ["full"] }
 validator = { version = "0.16.1", features = ["derive"] }
+
+[dev-dependencies]
+redis-test = "0.2.1"

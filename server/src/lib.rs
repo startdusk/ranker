@@ -7,3 +7,6 @@ mod response;
 pub use response::*;
 pub mod data;
 pub mod state;
+
+#[cfg(test)]
+mod tests;
