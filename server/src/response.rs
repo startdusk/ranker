@@ -3,7 +3,7 @@ use axum::{extract::FromRequest, http::Request, Json, RequestExt};
 use serde::{de::DeserializeOwned, Serialize};
 use validator::Validate;
 
-use crate::ServerError;
+use crate::Error;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ValidatedInput<T>(pub T);
@@ -16,13 +16,13 @@ where
     Json<T>: FromRequest<(), B>,
     B: Send + 'static,
 {
-    type Rejection = ServerError;
+    type Rejection = Error;
 
     async fn from_request(req: Request<B>, _state: &S) -> Result<Self, Self::Rejection> {
         let Json(value) = req
             .extract::<Json<T>, _>()
             .await
-            .map_err(|_| ServerError::ValidationJsonError)?;
+            .map_err(|_| Error::ValidationJsonError)?;
         value.validate()?;
         Ok(ValidatedInput(value))
     }

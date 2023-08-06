@@ -10,9 +10,7 @@ pub async fn add(ValidatedInput(input): ValidatedInput<AddPoll>) -> Json<UnifyRe
     let poll = Poll {
         topic: input.topic,
         votes_per_voter: input.votes_per_voter,
-        name: input.name,
-        poll_id: create_poll_id(),
-        user_id: create_user_id(),
+        ..Default::default()
     };
     Json(UnifyResponse::ok(Some(poll)))
 }
