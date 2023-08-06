@@ -1,0 +1,10 @@
+### Add a poll
+POST http://127.0.0.1:3000/api/polls
+Accept: application/json
+Content-Type: application/json
+
+{
+    "topic": "topic",
+    "votes_per_voter": "stirng",
+    "name": "name"
+}
