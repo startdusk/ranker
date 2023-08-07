@@ -7,17 +7,17 @@ pub type NominationID = String;
 
 pub type Participants = HashMap<String, String>;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Nomination {
     pub text: String,
     pub user_id: String,
 }
 
-pub type Nominations = HashMap<NominationID, String>;
+pub type Nominations = HashMap<NominationID, Nomination>;
 
 pub type Rankings = HashMap<String, Vec<NominationID>>;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Clone, Deserialize, PartialEq, Eq)]
 pub struct Result {
     pub nomination_id: NominationID,
     pub nomination_text: String,
@@ -26,7 +26,7 @@ pub struct Result {
 
 pub type Results = Vec<Result>;
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
 pub struct Poll {
     pub id: String,
     pub topic: String,

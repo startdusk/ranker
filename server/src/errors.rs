@@ -23,6 +23,9 @@ pub enum Error {
 
     #[error(transparent)]
     RedisError(#[from] redis::RedisError),
+
+    #[error("Poll not found")]
+    PollNotFound,
 }
 
 impl IntoResponse for Error {
@@ -50,6 +53,10 @@ impl IntoResponse for Error {
                     500,
                     "Internal server error".to_string(),
                 )
+            }
+            Error::PollNotFound => {
+                let message = format!("Error: {}", self);
+                (StatusCode::BAD_REQUEST, 400, message)
             }
         };
         (

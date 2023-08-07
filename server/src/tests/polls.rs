@@ -1,0 +1,84 @@
+use std::collections::HashMap;
+use std::thread::sleep;
+use std::time::Duration;
+
+use crate::data::redis::polls::{
+    add_nomination, add_participant, add_poll, get_poll, remove_participant,
+};
+use crate::models::{Nomination, Poll};
+
+#[tokio::test]
+async fn test_polls_lifecycle() {
+    let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+    let mut con = client.get_async_connection().await.unwrap();
+    let ttl = 1; // expire 1s
+    let poll_id = "iBOY-JBDILBW3aWQwFTES".to_string();
+    let user_id = "T7EYUQ".to_string();
+    let topic = "test_tpoic".to_string();
+    let name = "mynameisben".to_string();
+    let votes_per_voter = 1;
+    let poll = Poll::new(
+        poll_id.clone(),
+        topic.clone(),
+        votes_per_voter,
+        user_id.clone(),
+    );
+    let adding_poll = add_poll(
+        &mut con,
+        ttl,
+        poll_id.clone(),
+        topic,
+        votes_per_voter,
+        user_id.clone(),
+    )
+    .await
+    .unwrap();
+    assert_eq!(poll, adding_poll);
+
+    let first_get_poll = get_poll(&mut con, poll_id.clone()).await.unwrap();
+    assert_eq!(poll, first_get_poll);
+
+    // participant
+    let add_participant_poll =
+        add_participant(&mut con, poll_id.clone(), user_id.clone(), name.clone())
+            .await
+            .unwrap();
+    let mut expect_add_participant_poll = poll.clone();
+    expect_add_participant_poll.participants =
+        HashMap::from([(poll.admin_id.clone(), name.clone())]);
+    assert_eq!(expect_add_participant_poll, add_participant_poll);
+    let remove_participant_poll = remove_participant(
+        &mut con,
+        add_participant_poll.id,
+        add_participant_poll.admin_id,
+    )
+    .await
+    .unwrap();
+    assert_eq!(poll.clone(), remove_participant_poll);
+
+    // nomination
+    let nomination_id = "nominati".to_string();
+    let text = "this is a text".to_string();
+    let nomination = Nomination {
+        user_id: user_id.clone(),
+        text,
+    };
+    let add_nomination_poll = add_nomination(
+        &mut con,
+        poll_id.clone(),
+        nomination_id.clone(),
+        nomination.clone(),
+    )
+    .await
+    .unwrap();
+    let mut expect_add_nomination_poll = poll.clone();
+    expect_add_nomination_poll.nominations = HashMap::from([(nomination_id, nomination)]);
+    assert_eq!(expect_add_nomination_poll, add_nomination_poll);
+
+    // wating for expire key
+    sleep(Duration::from_secs(ttl as u64));
+
+    let Err(_) = get_poll(&mut con, poll_id.clone()).await else {
+        panic!("Should panic")
+    };
+}
