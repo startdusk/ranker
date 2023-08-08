@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
+use crate::Error;
+
 pub type NominationID = String;
 
 pub type Participants = HashMap<String, String>;
@@ -48,6 +50,19 @@ impl Poll {
             admin_id: user_id,
             ..Default::default()
         }
+    }
+
+    pub fn string(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+}
+
+impl TryFrom<String> for Poll {
+    type Error = Error;
+
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        let poll: Poll = serde_json::from_str(&value).map_err(Error::DeserializeJsonError)?;
+        Ok(poll)
     }
 }
 

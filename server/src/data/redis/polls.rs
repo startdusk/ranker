@@ -14,9 +14,10 @@ pub async fn add_poll(
     user_id: String,
 ) -> Result<Poll, Error> {
     let key = make_key(poll_id.clone());
+    let path = ".".to_string();
     let poll = Poll::new(poll_id, topic, votes_per_voter, user_id);
-    let value = serde_json::to_string(&poll).unwrap();
-    let _ = redis::Script::new(
+    let value = poll.string();
+    redis::Script::new(
         r#"
         local key = KEYS[1]
         local path = ARGV[1]
@@ -28,7 +29,7 @@ pub async fn add_poll(
     "#,
     )
     .key(key)
-    .arg(".")
+    .arg(path)
     .arg(value)
     .arg(ttl.to_string())
     .invoke_async(con)
@@ -40,6 +41,7 @@ pub async fn add_poll(
 
 pub async fn get_poll(con: &mut Connection, poll_id: String) -> Result<Poll, Error> {
     let key = make_key(poll_id);
+    let path = ".".to_string();
     let poll_json: String = redis::Script::new(
         r#"
         local key = KEYS[1]
@@ -52,7 +54,7 @@ pub async fn get_poll(con: &mut Connection, poll_id: String) -> Result<Poll, Err
     "#,
     )
     .key(key)
-    .arg(".")
+    .arg(path)
     .invoke_async(con)
     .await
     .map_err(Error::RedisError)?;
@@ -61,7 +63,7 @@ pub async fn get_poll(con: &mut Connection, poll_id: String) -> Result<Poll, Err
         return Err(Error::PollNotFound);
     }
 
-    let poll: Poll = serde_json::from_str(&poll_json).map_err(Error::DeserializeJsonError)?;
+    let poll: Poll = poll_json.try_into()?;
     Ok(poll)
 }
 
@@ -74,7 +76,7 @@ pub async fn add_participant(
     let key = make_key(poll_id);
     let path = make_participant_path(user_id);
     let value = serde_json::to_string(&name).unwrap();
-    Ok(set_path_value(con, key, path, value).await?)
+    set_path_value(con, key, path, value).await
 }
 
 pub async fn remove_participant(
@@ -83,32 +85,9 @@ pub async fn remove_participant(
     user_id: String,
 ) -> Result<Poll, Error> {
     let key = make_key(poll_id);
-    let participant_path = make_participant_path(user_id);
+    let path = make_participant_path(user_id);
 
-    let poll_json: String = redis::Script::new(
-        r#"
-        local key = KEYS[1]
-        local path = ARGV[1]
-        if redis.call('EXISTS', key) == 1 then  
-            redis.call('JSON.DEL', key, path) 
-            return redis.call('JSON.GET', key, '.') 
-        else
-            return '-1'
-        end
-    "#,
-    )
-    .key(key)
-    .arg(participant_path)
-    .invoke_async(con)
-    .await
-    .map_err(Error::RedisError)?;
-
-    if poll_json == "-1" {
-        return Err(Error::PollNotFound);
-    }
-
-    let poll: Poll = serde_json::from_str(&poll_json).map_err(Error::DeserializeJsonError)?;
-    Ok(poll)
+    remove_path_value(con, key, path).await
 }
 
 pub async fn add_nomination(
@@ -117,11 +96,11 @@ pub async fn add_nomination(
     nomination_id: NominationID,
     nomination: Nomination,
 ) -> Result<Poll, Error> {
-    let key = make_key(poll_id.clone());
+    let key = make_key(poll_id);
     let path = make_nomination_path(nomination_id);
     let value = serde_json::to_string(&nomination).unwrap();
 
-    Ok(set_path_value(con, key, path, value).await?)
+    set_path_value(con, key, path, value).await
 }
 
 pub async fn remove_nomination(
@@ -129,42 +108,19 @@ pub async fn remove_nomination(
     poll_id: String,
     nomination_id: NominationID,
 ) -> Result<Poll, Error> {
-    let key = make_key(poll_id.clone());
-    let nomination_path = make_nomination_path(nomination_id);
+    let key = make_key(poll_id);
+    let path = make_nomination_path(nomination_id);
 
-    let poll_json: String = redis::Script::new(
-        r#"
-        local key = KEYS[1]
-        local path = ARGV[1]
-        if redis.call('EXISTS', key) == 1 then  
-            redis.call('JSON.DEL', key, path) 
-            return redis.call('JSON.GET', key, '.') 
-        else
-            return '-1'
-        end
-    "#,
-    )
-    .key(key)
-    .arg(nomination_path)
-    .invoke_async(con)
-    .await
-    .map_err(Error::RedisError)?;
-
-    if poll_json == "-1" {
-        return Err(Error::PollNotFound);
-    }
-
-    let poll: Poll = serde_json::from_str(&poll_json).map_err(Error::DeserializeJsonError)?;
-    Ok(poll)
+    remove_path_value(con, key, path).await
 }
 
 pub async fn start_poll(con: &mut Connection, poll_id: String) -> Result<Poll, Error> {
-    let key = make_key(poll_id.clone());
+    let key = make_key(poll_id);
     let path = ".has_started".to_string();
     let started = true;
     let value = serde_json::to_string(&started).unwrap();
 
-    Ok(set_path_value(con, key, path, value).await?)
+    set_path_value(con, key, path, value).await
 }
 
 pub async fn add_participant_rankings(
@@ -173,11 +129,11 @@ pub async fn add_participant_rankings(
     user_id: String,
     rankings: Rankings,
 ) -> Result<Poll, Error> {
-    let key = make_key(poll_id.clone());
+    let key = make_key(poll_id);
     let path = make_rankings_path(user_id);
     let value = serde_json::to_string(&rankings).unwrap();
 
-    Ok(set_path_value(con, key, path, value).await?)
+    set_path_value(con, key, path, value).await
 }
 
 pub async fn add_results(
@@ -185,17 +141,17 @@ pub async fn add_results(
     poll_id: String,
     results: Results,
 ) -> Result<Poll, Error> {
-    let key = make_key(poll_id.clone());
+    let key = make_key(poll_id);
     let path = ".results".to_string();
     let value = serde_json::to_string(&results).unwrap();
 
-    Ok(set_path_value(con, key, path, value).await?)
+    set_path_value(con, key, path, value).await
 }
 
 pub async fn del_poll(con: &mut Connection, poll_id: String) -> Result<(), Error> {
     let key = make_key(poll_id);
-    let _ = cmd("JSON.DEL")
-        .arg(&[key])
+    cmd("JSON.DEL")
+        .arg(key)
         .query_async(con)
         .await
         .map_err(Error::RedisError)?;
@@ -249,6 +205,33 @@ async fn set_path_value(
         return Err(Error::PollNotFound);
     }
 
-    let poll: Poll = serde_json::from_str(&poll_json).map_err(Error::DeserializeJsonError)?;
+    let poll: Poll = poll_json.try_into()?;
+    Ok(poll)
+}
+
+async fn remove_path_value(con: &mut Connection, key: String, path: String) -> Result<Poll, Error> {
+    let poll_json: String = redis::Script::new(
+        r#"
+        local key = KEYS[1]
+        local path = ARGV[1]
+        if redis.call('EXISTS', key) == 1 then  
+            redis.call('JSON.DEL', key, path) 
+            return redis.call('JSON.GET', key, '.') 
+        else
+            return '-1'
+        end
+    "#,
+    )
+    .key(key)
+    .arg(path)
+    .invoke_async(con)
+    .await
+    .map_err(Error::RedisError)?;
+
+    if poll_json == "-1" {
+        return Err(Error::PollNotFound);
+    }
+
+    let poll: Poll = poll_json.try_into()?;
     Ok(poll)
 }

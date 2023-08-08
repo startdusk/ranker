@@ -1,6 +1,6 @@
 use axum::{routing::post, Router};
 use serde::Deserialize;
-use server::handlers::polls;
+use server::handlers::{not_found, polls};
 use std::net::SocketAddr;
 use tokio::signal;
 
@@ -16,7 +16,7 @@ pub struct Config {
 
 #[tokio::main]
 async fn main() {
-    dotenvy::dotenv().expect("cannot find .env file!");
+    dotenvy::dotenv().ok();
     let Ok(config) = envy::prefixed("RANKER_").from_env::<Config>() else {
         panic!("config file error")
     };
@@ -24,16 +24,18 @@ async fn main() {
     dbg!(&config);
 
     // build our application with a route
-    let app = Router::new().nest(
-        "/api",
-        Router::new().nest(
-            "/polls",
-            Router::new()
-                .route("/", post(polls::add))
-                .route("/join", post(polls::join))
-                .route("/rejoin", post(polls::rejoin)),
-        ),
-    );
+    let app = Router::new()
+        .nest(
+            "/api",
+            Router::new().nest(
+                "/polls",
+                Router::new()
+                    .route("/", post(polls::add))
+                    .route("/join", post(polls::join))
+                    .route("/rejoin", post(polls::rejoin)),
+            ),
+        )
+        .fallback(not_found::handler_404);
 
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], config.server_http_port));

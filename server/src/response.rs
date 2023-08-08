@@ -55,4 +55,8 @@ where
     pub fn err(code: i32, message: String) -> Self {
         Self::new(code, message, false, None)
     }
+
+    pub fn json(self) -> Json<Self> {
+        Json(self)
+    }
 }

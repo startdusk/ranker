@@ -3,7 +3,6 @@ use axum::{
     extract::rejection::FormRejection,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use thiserror::Error;
 
@@ -32,7 +31,7 @@ impl IntoResponse for Error {
     fn into_response(self) -> Response {
         let (status_code, err_code, error_message) = match self {
             Error::ValidationJsonError => {
-                let message = format!("Input validation json error");
+                let message = "Input validation json error".to_string();
                 (StatusCode::BAD_REQUEST, 100, message)
             }
             Error::ValidationError(_) => {
@@ -55,13 +54,13 @@ impl IntoResponse for Error {
                 )
             }
             Error::PollNotFound => {
-                let message = format!("Error: {}", self);
-                (StatusCode::BAD_REQUEST, 400, message)
+                let message = format!("Poll error: {}", self);
+                (StatusCode::BAD_REQUEST, 500, message)
             }
         };
         (
             status_code,
-            Json(UnifyResponse::<()>::err(err_code, error_message)),
+            UnifyResponse::<()>::err(err_code, error_message).json(),
         )
             .into_response()
     }
