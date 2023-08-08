@@ -6,6 +6,7 @@ pub use errors::*;
 mod response;
 pub use response::*;
 pub mod data;
+pub mod middlewares;
 pub mod state;
 
 #[cfg(test)]

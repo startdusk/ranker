@@ -1,18 +1,11 @@
-use axum::{routing::post, Router};
-use serde::Deserialize;
-use server::handlers::{not_found, polls};
-use std::net::SocketAddr;
+use axum::{middleware, routing::post, Extension, Router};
+use server::{
+    handlers::{not_found, polls},
+    middlewares::jwt,
+    state::{AppState, Config},
+};
+use std::{net::SocketAddr, sync::Arc};
 use tokio::signal;
-
-#[derive(Debug, Deserialize)]
-pub struct Config {
-    pub server_http_port: u16,
-    pub client_port: u16,
-    pub redis_host: String,
-    pub redis_port: String,
-    pub poll_duration: usize,
-    pub jwt_secret: String,
-}
 
 #[tokio::main]
 async fn main() {
@@ -21,19 +14,23 @@ async fn main() {
         panic!("config file error")
     };
 
-    dbg!(&config);
-
+    let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+    let mut redis_mgr = redis::aio::ConnectionManager::new(client).await.unwrap();
+    let app_state = Arc::new(AppState { env: config });
     // build our application with a route
     let app = Router::new()
         .nest(
             "/api",
-            Router::new().nest(
-                "/polls",
-                Router::new()
-                    .route("/", post(polls::add))
-                    .route("/join", post(polls::join))
-                    .route("/rejoin", post(polls::rejoin)),
-            ),
+            Router::new()
+                .nest(
+                    "/polls",
+                    Router::new()
+                        .route("/", post(polls::add))
+                        .route("/join", post(polls::join))
+                        .route("/rejoin", post(polls::rejoin))
+                        .route_layer(middleware::from_fn_with_state(app_state, jwt::auth)),
+                )
+                .with_state(app_state),
         )
         .fallback(not_found::handler_404);
 

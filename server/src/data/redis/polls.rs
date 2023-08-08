@@ -1,4 +1,4 @@
-use redis::{aio::Connection, cmd};
+use redis::{aio::ConnectionManager, cmd};
 
 use crate::{
     models::{Nomination, NominationID, Poll, Rankings, Results},
@@ -6,7 +6,7 @@ use crate::{
 };
 
 pub async fn add_poll(
-    con: &mut Connection,
+    con: &mut ConnectionManager,
     ttl: usize,
     poll_id: String,
     topic: String,
@@ -39,7 +39,7 @@ pub async fn add_poll(
     Ok(poll)
 }
 
-pub async fn get_poll(con: &mut Connection, poll_id: String) -> Result<Poll, Error> {
+pub async fn get_poll(con: &mut ConnectionManager, poll_id: String) -> Result<Poll, Error> {
     let key = make_key(poll_id);
     let path = ".".to_string();
     let poll_json: String = redis::Script::new(
@@ -68,7 +68,7 @@ pub async fn get_poll(con: &mut Connection, poll_id: String) -> Result<Poll, Err
 }
 
 pub async fn add_participant(
-    con: &mut Connection,
+    con: &mut ConnectionManager,
     poll_id: String,
     user_id: String,
     name: String,
@@ -80,7 +80,7 @@ pub async fn add_participant(
 }
 
 pub async fn remove_participant(
-    con: &mut Connection,
+    con: &mut ConnectionManager,
     poll_id: String,
     user_id: String,
 ) -> Result<Poll, Error> {
@@ -91,7 +91,7 @@ pub async fn remove_participant(
 }
 
 pub async fn add_nomination(
-    con: &mut Connection,
+    con: &mut ConnectionManager,
     poll_id: String,
     nomination_id: NominationID,
     nomination: Nomination,
@@ -104,7 +104,7 @@ pub async fn add_nomination(
 }
 
 pub async fn remove_nomination(
-    con: &mut Connection,
+    con: &mut ConnectionManager,
     poll_id: String,
     nomination_id: NominationID,
 ) -> Result<Poll, Error> {
@@ -114,7 +114,7 @@ pub async fn remove_nomination(
     remove_path_value(con, key, path).await
 }
 
-pub async fn start_poll(con: &mut Connection, poll_id: String) -> Result<Poll, Error> {
+pub async fn start_poll(con: &mut ConnectionManager, poll_id: String) -> Result<Poll, Error> {
     let key = make_key(poll_id);
     let path = ".has_started".to_string();
     let started = true;
@@ -124,7 +124,7 @@ pub async fn start_poll(con: &mut Connection, poll_id: String) -> Result<Poll, E
 }
 
 pub async fn add_participant_rankings(
-    con: &mut Connection,
+    con: &mut ConnectionManager,
     poll_id: String,
     user_id: String,
     rankings: Rankings,
@@ -137,7 +137,7 @@ pub async fn add_participant_rankings(
 }
 
 pub async fn add_results(
-    con: &mut Connection,
+    con: &mut ConnectionManager,
     poll_id: String,
     results: Results,
 ) -> Result<Poll, Error> {
@@ -148,7 +148,7 @@ pub async fn add_results(
     set_path_value(con, key, path, value).await
 }
 
-pub async fn del_poll(con: &mut Connection, poll_id: String) -> Result<(), Error> {
+pub async fn del_poll(con: &mut ConnectionManager, poll_id: String) -> Result<(), Error> {
     let key = make_key(poll_id);
     cmd("JSON.DEL")
         .arg(key)
@@ -176,7 +176,7 @@ fn make_rankings_path(user_id: String) -> String {
 }
 
 async fn set_path_value(
-    con: &mut Connection,
+    con: &mut ConnectionManager,
     key: String,
     path: String,
     value: String,
@@ -209,7 +209,11 @@ async fn set_path_value(
     Ok(poll)
 }
 
-async fn remove_path_value(con: &mut Connection, key: String, path: String) -> Result<Poll, Error> {
+async fn remove_path_value(
+    con: &mut ConnectionManager,
+    key: String,
+    path: String,
+) -> Result<Poll, Error> {
     let poll_json: String = redis::Script::new(
         r#"
         local key = KEYS[1]

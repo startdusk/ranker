@@ -11,7 +11,7 @@ use crate::models::{Nomination, Poll, Result};
 #[tokio::test]
 async fn test_polls_lifecycle() {
     let client = redis::Client::open("redis://127.0.0.1/").unwrap();
-    let mut con = client.get_async_connection().await.unwrap();
+    let mut con = redis::aio::ConnectionManager::new(client).await.unwrap();
     let ttl = 1; // expire 1s
     let poll_id = "iBOY-JBDILBW3aWQwFTES".to_string();
     let user_id = "T7EYUQ".to_string();

@@ -89,19 +89,6 @@ pub struct JoinPoll {
 }
 
 #[derive(Debug, Deserialize, Validate)]
-pub struct RejoinPoll {
-    #[validate(length(min = 1, max = 25, message = "Can not be empty"))]
-    pub name: String,
-}
-
-#[derive(Debug, Serialize)]
-pub struct JoinPollResult {
-    pub poll_id: String,
-    pub user_id: String,
-    pub name: String,
-}
-
-#[derive(Debug, Deserialize, Validate)]
 pub struct AddNomination {
     #[validate(length(min = 1, max = 100, message = "Can not be empty"))]
     pub text: String,

@@ -1,8 +1,10 @@
-use axum::Json;
+use axum::{Extension, Json};
+use redis::aio::ConnectionManager;
 
 use crate::{
-    ids::{create_poll_id, create_user_id},
-    models::{AddPoll, JoinPoll, JoinPollResult, Poll, RejoinPoll},
+    data::redis::polls,
+    middlewares::jwt::AuthPayload,
+    models::{AddPoll, JoinPoll, Poll},
     Error, UnifyResponse, ValidatedInput,
 };
 
@@ -18,24 +20,24 @@ pub async fn add(
 }
 
 pub async fn join(
-    ValidatedInput(input): ValidatedInput<JoinPoll>,
-) -> Result<Json<UnifyResponse<JoinPollResult>>, Error> {
-    let poll = JoinPollResult {
-        poll_id: input.poll_id,
-        name: input.name,
-        user_id: create_user_id(),
+    ValidatedInput(_input): ValidatedInput<JoinPoll>,
+) -> Result<Json<UnifyResponse<Poll>>, Error> {
+    let poll = Poll {
+        ..Default::default()
     };
     Ok(UnifyResponse::ok(Some(poll)).json())
 }
 
 pub async fn rejoin(
-    ValidatedInput(input): ValidatedInput<RejoinPoll>,
-) -> Result<Json<UnifyResponse<JoinPollResult>>, Error> {
-    let poll = JoinPollResult {
-        name: input.name,
-        poll_id: create_poll_id(),
-        user_id: create_user_id(),
-    };
-
+    Extension(mut con): Extension<ConnectionManager>,
+    Extension(auth_payload): Extension<AuthPayload>,
+) -> Result<Json<UnifyResponse<Poll>>, Error> {
+    let poll = polls::add_participant(
+        &mut con,
+        auth_payload.poll_id,
+        auth_payload.user_id,
+        auth_payload.name,
+    )
+    .await?;
     Ok(UnifyResponse::ok(Some(poll)).json())
 }

@@ -25,6 +25,18 @@ pub enum Error {
 
     #[error("Poll not found")]
     PollNotFound,
+
+    #[error("Wrong credentials")]
+    WrongCredentials,
+
+    #[error("Missing credentials")]
+    MissingCredentials,
+
+    #[error("Token creation")]
+    TokenCreation,
+
+    #[error("Invalid token")]
+    InvalidToken,
 }
 
 impl IntoResponse for Error {
@@ -57,6 +69,23 @@ impl IntoResponse for Error {
                 let message = format!("Poll error: {}", self);
                 (StatusCode::BAD_REQUEST, 500, message)
             }
+
+            Error::WrongCredentials => (
+                StatusCode::UNAUTHORIZED,
+                600,
+                "Wrong credentials".to_string(),
+            ),
+            Error::MissingCredentials => (
+                StatusCode::BAD_REQUEST,
+                700,
+                "Missing credentials".to_string(),
+            ),
+            Error::TokenCreation => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                800,
+                "Token creation error".to_string(),
+            ),
+            Error::InvalidToken => (StatusCode::BAD_REQUEST, 900, "Invalid token".to_string()),
         };
         (
             status_code,
