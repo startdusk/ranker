@@ -4,6 +4,7 @@ use tokio::sync::broadcast;
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     pub server_http_port: u16,
+    pub client_domain: String,
     pub client_port: u16,
     pub redis_host: String,
     pub redis_port: String,
