@@ -1,43 +1,60 @@
-use axum::{Extension, Json};
+use std::sync::Arc;
+
+use axum::{extract::State, Extension, Json};
 use redis::aio::ConnectionManager;
 
 use crate::{
     data::redis::polls,
-    middlewares::jwt::AuthPayload,
-    models::{AddPoll, JoinPoll, Poll},
+    ids::{create_poll_id, create_user_id},
+    models::{
+        authed::{self, Authed},
+        AddPollReq, AddPollResp, JoinPollReq, JoinPollResp, Poll,
+    },
+    state::AppState,
     Error, UnifyResponse, ValidatedInput,
 };
 
 pub async fn add(
-    ValidatedInput(input): ValidatedInput<AddPoll>,
-) -> Result<Json<UnifyResponse<Poll>>, Error> {
-    let poll = Poll {
-        topic: input.topic,
-        votes_per_voter: input.votes_per_voter,
-        ..Default::default()
-    };
-    Ok(UnifyResponse::ok(Some(poll)).json())
+    State(state): State<Arc<AppState>>,
+    Extension(mut con): Extension<ConnectionManager>,
+    ValidatedInput(input): ValidatedInput<AddPollReq>,
+) -> Result<Json<UnifyResponse<AddPollResp>>, Error> {
+    let ttl = state.env.poll_duration;
+    let poll_id = create_poll_id();
+    let user_id = create_user_id();
+    let poll = polls::add_poll(
+        &mut con,
+        ttl,
+        poll_id.clone(),
+        input.topic,
+        input.votes_per_voter,
+        user_id.clone(),
+    )
+    .await?;
+    let access_token = authed::token_gen(poll_id, user_id, input.name, ttl)?;
+    let add_poll_resp = AddPollResp { poll, access_token };
+    Ok(UnifyResponse::ok(Some(add_poll_resp)).json())
 }
 
 pub async fn join(
-    ValidatedInput(_input): ValidatedInput<JoinPoll>,
-) -> Result<Json<UnifyResponse<Poll>>, Error> {
-    let poll = Poll {
-        ..Default::default()
-    };
-    Ok(UnifyResponse::ok(Some(poll)).json())
+    State(state): State<Arc<AppState>>,
+    Extension(mut con): Extension<ConnectionManager>,
+    ValidatedInput(input): ValidatedInput<JoinPollReq>,
+) -> Result<Json<UnifyResponse<JoinPollResp>>, Error> {
+    let ttl = state.env.poll_duration;
+    let user_id = create_user_id();
+    let poll_id = input.poll_id;
+    let poll = polls::get_poll(&mut con, poll_id.clone()).await?;
+
+    let access_token = authed::token_gen(poll_id, user_id, input.name, ttl)?;
+    let join_poll_resp = JoinPollResp { poll, access_token };
+    Ok(UnifyResponse::ok(Some(join_poll_resp)).json())
 }
 
 pub async fn rejoin(
     Extension(mut con): Extension<ConnectionManager>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    authed: Authed,
 ) -> Result<Json<UnifyResponse<Poll>>, Error> {
-    let poll = polls::add_participant(
-        &mut con,
-        auth_payload.poll_id,
-        auth_payload.user_id,
-        auth_payload.name,
-    )
-    .await?;
+    let poll = polls::add_participant(&mut con, authed.poll_id, authed.sub, authed.name).await?;
     Ok(UnifyResponse::ok(Some(poll)).json())
 }

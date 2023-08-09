@@ -51,7 +51,19 @@ async fn test_polls_lifecycle() {
     expect_add_participant_poll.participants =
         HashMap::from([(poll.admin_id.clone(), name.clone())]);
     assert_eq!(expect_add_participant_poll, add_participant_poll);
-    // 4.remove participant
+
+    // remove participant get error(poll no start)
+    let Err(_) = remove_participant(&mut con, add_participant_poll.id.clone(), add_participant_poll.admin_id.clone()).await else {
+        panic!("Should be got an error")
+    };
+
+    // 4.start poll
+    let started_poll = start_poll(&mut con, poll_id.clone()).await.unwrap();
+    let mut expect_started_poll = expect_add_participant_poll.clone();
+    expect_started_poll.has_started = true;
+    assert_eq!(expect_started_poll, started_poll);
+
+    // 5.remove participant
     let remove_participant_poll = remove_participant(
         &mut con,
         add_participant_poll.id,
@@ -59,9 +71,11 @@ async fn test_polls_lifecycle() {
     )
     .await
     .unwrap();
-    assert_eq!(poll.clone(), remove_participant_poll);
+    let mut expect_remove_participant_poll = expect_started_poll.clone();
+    expect_remove_participant_poll.participants = HashMap::new();
+    assert_eq!(expect_remove_participant_poll, remove_participant_poll);
 
-    // 5.add nomination
+    // 6.add nomination
     let nomination_id = "nominati".to_string();
     let text = "this is a text".to_string();
     let nomination = Nomination {
@@ -76,22 +90,19 @@ async fn test_polls_lifecycle() {
     )
     .await
     .unwrap();
-    let mut expect_add_nomination_poll = poll.clone();
+    let mut expect_add_nomination_poll = expect_remove_participant_poll.clone();
     expect_add_nomination_poll.nominations = HashMap::from([(nomination_id.clone(), nomination)]);
     assert_eq!(expect_add_nomination_poll, add_nomination_poll);
 
-    // 6.remove nomination
+    // 7.remove nomination
     let remove_nomination_poll =
         remove_nomination(&mut con, poll_id.clone(), nomination_id.clone())
             .await
             .unwrap();
-    assert_eq!(poll.clone(), remove_nomination_poll);
 
-    // 7.start poll
-    let started_poll = start_poll(&mut con, poll_id.clone()).await.unwrap();
-    let mut expect_started_poll = poll.clone();
-    expect_started_poll.has_started = true;
-    assert_eq!(expect_started_poll, started_poll);
+    let mut expect_remove_nomination_poll = expect_add_nomination_poll.clone();
+    expect_remove_nomination_poll.nominations = HashMap::new();
+    assert_eq!(expect_remove_nomination_poll, remove_nomination_poll);
 
     // 8.add results
     let results = vec![Result {
@@ -102,7 +113,7 @@ async fn test_polls_lifecycle() {
     let add_results_poll = add_results(&mut con, poll_id.clone(), results.clone())
         .await
         .unwrap();
-    let mut expect_add_results_poll = expect_started_poll.clone();
+    let mut expect_add_results_poll = expect_remove_nomination_poll;
     expect_add_results_poll.results = results;
     assert_eq!(expect_add_results_poll, add_results_poll);
 

@@ -1,6 +1,7 @@
 use serde::Deserialize;
+use tokio::sync::broadcast;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     pub server_http_port: u16,
     pub client_port: u16,
@@ -10,6 +11,9 @@ pub struct Config {
     pub jwt_secret: String,
 }
 
+#[derive(Clone)]
 pub struct AppState {
     pub env: Config,
+    // Channel used to send messages to all connected clients.
+    pub tx: broadcast::Sender<String>,
 }

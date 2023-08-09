@@ -18,7 +18,7 @@ fmt:
 
 .PHONY: run
 run:
-	@cargo run --bin filebox-server
+	@cargo run --bin ranker-server
 
 .PHONY: watch
 watch: fmt

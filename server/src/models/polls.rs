@@ -70,7 +70,7 @@ impl TryFrom<String> for Poll {
 // DTO object
 
 #[derive(Debug, Deserialize, Validate)]
-pub struct AddPoll {
+pub struct AddPollReq {
     #[validate(length(min = 1, max = 100, message = "Can not be empty"))]
     pub topic: String,
     #[validate(range(min = 1, max = 5))]
@@ -80,7 +80,7 @@ pub struct AddPoll {
 }
 
 #[derive(Debug, Deserialize, Validate)]
-pub struct JoinPoll {
+pub struct JoinPollReq {
     #[validate(length(min = 6, max = 6, message = "Can not be empty"))]
     pub poll_id: String,
 
@@ -89,7 +89,15 @@ pub struct JoinPoll {
 }
 
 #[derive(Debug, Deserialize, Validate)]
-pub struct AddNomination {
+pub struct AddNominationReq {
     #[validate(length(min = 1, max = 100, message = "Can not be empty"))]
     pub text: String,
 }
+
+#[derive(Debug, Serialize)]
+pub struct AddPollResp {
+    pub poll: Poll,
+    pub access_token: String,
+}
+
+pub type JoinPollResp = AddPollResp;

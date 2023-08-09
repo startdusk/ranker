@@ -87,7 +87,39 @@ pub async fn remove_participant(
     let key = make_key(poll_id);
     let path = make_participant_path(user_id);
 
-    remove_path_value(con, key, path).await
+    let poll_json: String = redis::Script::new(
+        r#"
+        local key = KEYS[1]
+        local path = ARGV[1]
+        local value = ARGV[2]
+        if redis.call('EXISTS', key) == 1 then  
+            if redis.call('JSON.GET', key, '.has_started') == 'true' then
+                redis.call('JSON.DEL', key, path)
+                return redis.call('JSON.GET', key, '.') 
+            else
+                return '-2'
+            end
+        else
+            return '-1'
+        end
+    "#,
+    )
+    .key(key)
+    .arg(path)
+    .invoke_async(con)
+    .await
+    .map_err(Error::RedisError)?;
+
+    if poll_json == "-1" {
+        return Err(Error::PollNotFound);
+    }
+
+    if poll_json == "-2" {
+        return Err(Error::PollNoStart);
+    }
+
+    let poll: Poll = poll_json.try_into()?;
+    Ok(poll)
 }
 
 pub async fn add_nomination(
@@ -119,7 +151,6 @@ pub async fn start_poll(con: &mut ConnectionManager, poll_id: String) -> Result<
     let path = ".has_started".to_string();
     let started = true;
     let value = serde_json::to_string(&started).unwrap();
-
     set_path_value(con, key, path, value).await
 }
 
@@ -133,7 +164,40 @@ pub async fn add_participant_rankings(
     let path = make_rankings_path(user_id);
     let value = serde_json::to_string(&rankings).unwrap();
 
-    set_path_value(con, key, path, value).await
+    let poll_json: String = redis::Script::new(
+        r#"
+        local key = KEYS[1]
+        local path = ARGV[1]
+        local value = ARGV[2]
+        if redis.call('EXISTS', key) == 1 then  
+            if redis.call('JSON.GET', key, '.has_started') == 'true' then
+                redis.call('JSON.SET', key, path, value)
+                return redis.call('JSON.GET', key, '.') 
+            else
+                return '-2'
+            end
+        else
+            return '-1'
+        end
+    "#,
+    )
+    .key(key)
+    .arg(path)
+    .arg(value)
+    .invoke_async(con)
+    .await
+    .map_err(Error::RedisError)?;
+
+    if poll_json == "-1" {
+        return Err(Error::PollNotFound);
+    }
+
+    if poll_json == "-2" {
+        return Err(Error::PollNoStart);
+    }
+
+    let poll: Poll = poll_json.try_into()?;
+    Ok(poll)
 }
 
 pub async fn add_results(
