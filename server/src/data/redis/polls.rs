@@ -86,14 +86,14 @@ pub async fn remove_participant(
 ) -> Result<Poll, Error> {
     let key = make_key(poll_id);
     let path = make_participant_path(user_id);
-
+    // can remove if no has_started == 'false'
     let poll_json: String = redis::Script::new(
         r#"
         local key = KEYS[1]
         local path = ARGV[1]
         local value = ARGV[2]
         if redis.call('EXISTS', key) == 1 then  
-            if redis.call('JSON.GET', key, '.has_started') == 'true' then
+            if redis.call('JSON.GET', key, '.has_started') == 'false' then
                 redis.call('JSON.DEL', key, path)
                 return redis.call('JSON.GET', key, '.') 
             else
@@ -115,7 +115,7 @@ pub async fn remove_participant(
     }
 
     if poll_json == "-2" {
-        return Err(Error::PollNoStart);
+        return Err(Error::PollHasStarted);
     }
 
     let poll: Poll = poll_json.try_into()?;

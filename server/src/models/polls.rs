@@ -88,7 +88,7 @@ pub struct JoinPollReq {
     pub name: String,
 }
 
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct AddNominationReq {
     #[validate(length(min = 1, max = 100, message = "Can not be empty"))]
     pub text: String,

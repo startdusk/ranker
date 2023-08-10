@@ -8,6 +8,7 @@ use axum::{
     Router,
 };
 use futures::{sink::SinkExt, stream::StreamExt};
+use serde::{Deserialize, Serialize};
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::broadcast;
 
@@ -45,6 +46,17 @@ async fn websocket_handler(
     ws.on_upgrade(move |socket| websocket(socket, state, addr))
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+enum Event {
+    Message(String),
+}
+
+impl Event {
+    pub fn message(self) -> String {
+        serde_json::to_string(&self).unwrap()
+    }
+}
+
 // This function deals with a single websocket connection, i.e., a single
 // connected client / user, for which we will spawn two independent tasks (for
 // receiving / sending chat messages).
@@ -65,7 +77,11 @@ async fn websocket(stream: WebSocket, state: Arc<AppState>, addr: SocketAddr) {
     let mut send_task = tokio::spawn(async move {
         while let Ok(msg) = rx.recv().await {
             // In any websocket error, break loop.
-            if sender.send(Message::Text(msg)).await.is_err() {
+            if sender
+                .send(Message::Text(Event::Message(msg).message()))
+                .await
+                .is_err()
+            {
                 break;
             }
         }

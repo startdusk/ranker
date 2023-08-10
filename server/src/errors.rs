@@ -28,6 +28,8 @@ pub enum Error {
 
     #[error("Poll no start")]
     PollNoStart,
+    #[error("Poll has started")]
+    PollHasStarted,
 
     #[error("Wrong credentials")]
     WrongCredentials,
@@ -40,6 +42,9 @@ pub enum Error {
 
     #[error("Invalid token")]
     InvalidToken,
+
+    #[error("Deserialize Websocket event error")]
+    DeserializeWebsocketEventError,
 }
 
 impl IntoResponse for Error {
@@ -87,7 +92,17 @@ impl IntoResponse for Error {
             ),
             Error::InvalidToken => (StatusCode::BAD_REQUEST, 900, "Invalid token".to_string()),
 
-            Error::PollNoStart => (StatusCode::BAD_REQUEST, 500, "Poll no start".to_string()),
+            Error::PollNoStart => (StatusCode::BAD_REQUEST, 1000, "Poll no start".to_string()),
+            Error::PollHasStarted => (
+                StatusCode::BAD_REQUEST,
+                1100,
+                "Poll has started".to_string(),
+            ),
+            Error::DeserializeWebsocketEventError => (
+                StatusCode::BAD_REQUEST,
+                1200,
+                "Deserialize Websocket event error".to_string(),
+            ),
         };
         (
             status_code,

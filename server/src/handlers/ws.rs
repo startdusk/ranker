@@ -5,7 +5,9 @@ use axum::{
     },
     headers::{self, authorization::Bearer},
     response::IntoResponse,
+    Extension,
 };
+use redis::aio::ConnectionManager;
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -17,16 +19,21 @@ use axum::extract::connect_info::ConnectInfo;
 use futures::{sink::SinkExt, stream::StreamExt};
 
 use crate::{
-    models::authed::{self, Authed},
+    data::redis::polls,
+    models::{
+        authed::{self, Authed},
+        WebSocketEvent,
+    },
     state::AppState,
     Error,
 };
 
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
+    Extension(con): Extension<ConnectionManager>,
     State(state): State<Arc<AppState>>,
     authorization: Option<TypedHeader<headers::Authorization<Bearer>>>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    ConnectInfo(_addr): ConnectInfo<SocketAddr>,
 ) -> impl IntoResponse {
     let Some(TypedHeader(token)) = authorization else {
         return Error::MissingCredentials.into_response()
@@ -36,13 +43,27 @@ pub async fn ws_handler(
     let Ok(auth) = authed::verify(token.to_string()) else {
         return Error::InvalidToken.into_response();
     };
-    println!("`{}` at {addr} connected.", auth.sub);
-
-    ws.on_upgrade(move |socket| handle_socket(socket, addr, auth, state))
+    // println!("`{}` at {addr} connected.", auth.sub);
+    let con = con.clone();
+    ws.on_upgrade(move |socket| handle_socket(socket, con, auth, state))
 }
 
 /// Actual websocket statemachine (one will be spawned per connection)
-async fn handle_socket(socket: WebSocket, who: SocketAddr, auth: Authed, state: Arc<AppState>) {
+async fn handle_socket(
+    socket: WebSocket,
+    mut con: ConnectionManager,
+    auth: Authed,
+    state: Arc<AppState>,
+) {
+    let user_id = auth.sub.clone();
+    let poll_id = auth.poll_id.clone();
+    let name = auth.name;
+
+    let Ok(poll) =
+        polls::add_participant(&mut con, poll_id.clone(), user_id.clone(), name.clone()).await else {
+        return;
+    };
+
     // By splitting, we can send and receive at the same time.
     let (mut sender, mut receiver) = socket.split();
 
@@ -51,9 +72,10 @@ async fn handle_socket(socket: WebSocket, who: SocketAddr, auth: Authed, state: 
     let mut rx = state.tx.subscribe();
 
     // Now send the "joined" message to all subscribers.
-    let msg = format!("{} joined.", auth.name);
+    let msg = WebSocketEvent::PollUpdated(poll).message();
     let _ = state.tx.send(msg);
 
+    // server -> client
     // Spawn the first task that will receive broadcast messages and send text
     // messages over the websocket to our client.
     let mut send_task = tokio::spawn(async move {
@@ -68,15 +90,27 @@ async fn handle_socket(socket: WebSocket, who: SocketAddr, auth: Authed, state: 
     // Clone things we want to pass (move) to the receiving task.
     let tx = state.tx.clone();
 
+    // client -> server
     let mut recv_task = tokio::spawn(async move {
         while let Some(Ok(msg)) = receiver.next().await {
             match msg {
                 Message::Close(_) => {
                     // listen client exit
+                    let Ok(poll) = polls::remove_participant(&mut con, poll_id, user_id).await else {
+                        // just exit if err
+                        break;
+                    };
+                    let message = WebSocketEvent::PollUpdated(poll).message();
+                    let _ = tx.send(message);
                     break;
                 }
                 Message::Text(text) => {
-                    let _ = tx.send(format!("IP[{}]: {}", who, text));
+                    let event: WebSocketEvent = text.into();
+                    // TODO: handle this event
+                    // let message = match event {
+                    //     WebSocketEvent::CancelPoll =>
+                    // };
+                    let _ = tx.send(event.message());
                 }
                 _ => {}
             }
@@ -89,7 +123,7 @@ async fn handle_socket(socket: WebSocket, who: SocketAddr, auth: Authed, state: 
         _ = (&mut recv_task) => send_task.abort(),
     };
 
-    let msg = format!("{} left.", who);
+    let msg = format!("{} left.", name);
     let _ = state.tx.send(msg.to_string());
 
     println!("{msg}");
