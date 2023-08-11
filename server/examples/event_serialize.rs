@@ -6,6 +6,7 @@ enum Event {
     Message(String),
     PollUpdated(String),
     StartVote,
+    SubmitRankings(Vec<String>),
 }
 fn main() {
     let message = Event::Message("hello world".to_string());
@@ -17,6 +18,10 @@ fn main() {
     println!("{value}"); // print: {"poll_update":"poll update"}
 
     let message = Event::StartVote;
+    let value = serde_json::to_string(&message).unwrap();
+    println!("{value}"); // "start_vote"
+
+    let message = Event::SubmitRankings(vec!["1".to_string(), "2".to_string(), "3".to_string()]);
     let value = serde_json::to_string(&message).unwrap();
     println!("{value}"); // "start_vote"
 }

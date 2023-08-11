@@ -55,6 +55,12 @@ pub enum Error {
 
     #[error("Admin privileges required")]
     AdminPrivilegesRequired,
+
+    #[error("Unknown nomination")]
+    UnknownNomination,
+
+    #[error("No nomination")]
+    NoNomination,
 }
 
 impl IntoResponse for Error {
@@ -125,6 +131,12 @@ impl IntoResponse for Error {
                 1500,
                 "Admin privileges required".to_string(),
             ),
+            Error::UnknownNomination => (
+                StatusCode::BAD_REQUEST,
+                1600,
+                "Unknown nomination".to_string(),
+            ),
+            Error::NoNomination => (StatusCode::BAD_REQUEST, 1700, "No nomination".to_string()),
         };
         (
             status_code,

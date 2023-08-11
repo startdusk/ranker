@@ -142,6 +142,9 @@ async fn handle_socket(
                                 Err(Error::ValidationError(err))
                             } else {
                                 let nomination_id = create_nomination_id();
+                                rooms
+                                    .add_nomination(poll_id.clone(), nomination_id.clone())
+                                    .await;
                                 let nomination = Nomination {
                                     text: nomination.text,
                                     user_id: user_id.clone(),
@@ -159,49 +162,30 @@ async fn handle_socket(
                             polls::remove_nomination(&mut con, poll_id.clone(), nomination_id).await
                         }
                         WebSocketEvent::StartVote => {
-                            polls::start_poll(&mut con, poll_id.clone()).await
+                            start_vote(&mut con, poll_id.clone(), user_id.clone()).await
                         }
                         WebSocketEvent::SubmitRankings(rankings) => {
-                            polls::add_participant_rankings(
-                                &mut con,
-                                poll_id.clone(),
-                                user_id.clone(),
-                                *rankings,
-                            )
-                            .await
+                            if !rooms
+                                .contains_nomination(poll_id.clone(), rankings.clone())
+                                .await
+                            {
+                                Err(Error::UnknownNomination)
+                            } else {
+                                polls::add_participant_rankings(
+                                    &mut con,
+                                    poll_id.clone(),
+                                    user_id.clone(),
+                                    rankings,
+                                )
+                                .await
+                            }
                         }
 
                         WebSocketEvent::ClosePoll => {
-                            let poll_res = polls::get_poll(&mut con, poll_id.clone()).await;
-                            if let Err(err) = poll_res {
-                                Err(err)
-                            } else {
-                                let poll = poll_res.unwrap();
-                                if poll.admin_id != user_id {
-                                    Err(Error::AdminPrivilegesRequired)
-                                } else {
-                                    let results = poll.get_results();
-                                    polls::add_results(&mut con, poll_id.clone(), results).await
-                                }
-                            }
+                            close_poll(&mut con, poll_id.clone(), user_id.clone()).await
                         }
                         WebSocketEvent::CancelPoll => {
-                            let poll_res = polls::get_poll(&mut con, poll_id.clone()).await;
-                            if let Err(err) = poll_res {
-                                Err(err)
-                            } else {
-                                let poll = poll_res.unwrap();
-                                if poll.admin_id != user_id {
-                                    Err(Error::AdminPrivilegesRequired)
-                                } else {
-                                    let poll_res = polls::del_poll(&mut con, poll_id.clone()).await;
-                                    if let Err(err) = poll_res {
-                                        Err(err)
-                                    } else {
-                                        Err(Error::PollCancelled)
-                                    }
-                                }
-                            }
+                            cancel_poll(&mut con, poll_id.clone(), user_id.clone()).await
                         }
                         _ => Err(Error::UnsupportedWebsocketEvent),
                     };
@@ -244,6 +228,47 @@ async fn handle_socket(
     let _ = state.tx.send(msg.to_string());
 
     println!("{msg}");
+}
+
+async fn cancel_poll(
+    con: &mut ConnectionManager,
+    poll_id: String,
+    user_id: String,
+) -> Result<Poll, Error> {
+    let poll = polls::get_poll(con, poll_id.clone()).await?;
+    if poll.admin_id != user_id {
+        return Err(Error::AdminPrivilegesRequired);
+    }
+    polls::del_poll(con, poll_id.clone()).await?;
+    Err(Error::PollCancelled)
+}
+
+async fn close_poll(
+    con: &mut ConnectionManager,
+    poll_id: String,
+    user_id: String,
+) -> Result<Poll, Error> {
+    let poll = polls::get_poll(con, poll_id.clone()).await?;
+    if poll.admin_id != user_id {
+        return Err(Error::AdminPrivilegesRequired);
+    }
+    let results = poll.get_results();
+    polls::add_results(con, poll_id.clone(), results).await
+}
+
+async fn start_vote(
+    con: &mut ConnectionManager,
+    poll_id: String,
+    user_id: String,
+) -> Result<Poll, Error> {
+    let poll = polls::get_poll(con, poll_id.clone()).await?;
+    if poll.admin_id != user_id {
+        return Err(Error::AdminPrivilegesRequired);
+    }
+    if poll.nominations.is_empty() {
+        return Err(Error::NoNomination);
+    }
+    polls::start_poll(con, poll_id.clone()).await
 }
 
 async fn send_message(

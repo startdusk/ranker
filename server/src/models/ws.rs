@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{AddNominationReq, NominationID, Poll, Rankings};
+use super::{AddNominationReq, NominationID, Poll, RankingList};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -11,7 +11,7 @@ pub enum WebSocketEvent {
     Nomination(AddNominationReq),
     RemoveNomination(NominationID),
     StartVote,
-    SubmitRankings(Box<Rankings>),
+    SubmitRankings(RankingList),
     CancelPoll,
     ClosePoll,
     PollCancelled,

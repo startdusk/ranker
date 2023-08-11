@@ -1,7 +1,7 @@
 use redis::{aio::ConnectionManager, cmd};
 
 use crate::{
-    models::{Nomination, NominationID, Poll, Rankings, Results},
+    models::{Nomination, NominationID, Poll, RankingList, Results},
     Error,
 };
 
@@ -158,7 +158,7 @@ pub async fn add_participant_rankings(
     con: &mut ConnectionManager,
     poll_id: String,
     user_id: String,
-    rankings: Rankings,
+    rankings: RankingList,
 ) -> Result<Poll, Error> {
     let key = make_key(poll_id);
     let path = make_rankings_path(user_id);

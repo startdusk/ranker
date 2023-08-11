@@ -17,7 +17,9 @@ pub struct Nomination {
 
 pub type Nominations = HashMap<NominationID, Nomination>;
 
-pub type Rankings = HashMap<String, Box<Vec<NominationID>>>;
+pub type UserID = String;
+pub type Rankings = HashMap<UserID, RankingList>;
+pub type RankingList = Vec<NominationID>;
 
 #[derive(Debug, Serialize, Clone, Deserialize, PartialEq, Eq)]
 pub struct Result {

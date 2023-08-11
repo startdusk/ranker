@@ -5,3 +5,4 @@ pub use polls::*;
 mod ws;
 pub use ws::*;
 pub mod room;
+pub mod vote;
