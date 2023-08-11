@@ -26,8 +26,12 @@ pub enum Error {
     #[error("Poll not found")]
     PollNotFound,
 
+    #[error("Poll cancelled")]
+    PollCancelled,
+
     #[error("Poll no start")]
     PollNoStart,
+
     #[error("Poll has started")]
     PollHasStarted,
 
@@ -43,8 +47,14 @@ pub enum Error {
     #[error("Invalid token")]
     InvalidToken,
 
-    #[error("Deserialize Websocket event error")]
+    #[error("Deserialize websocket event error")]
     DeserializeWebsocketEventError,
+
+    #[error("Unsupported websocket event")]
+    UnsupportedWebsocketEvent,
+
+    #[error("Admin privileges required")]
+    AdminPrivilegesRequired,
 }
 
 impl IntoResponse for Error {
@@ -66,7 +76,7 @@ impl IntoResponse for Error {
             Error::RedisError(_) => {
                 let message = format!("Redis error: {}", self);
                 // TODO: log this error
-                dbg!(message);
+                println!("{}", message);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     500,
@@ -102,6 +112,18 @@ impl IntoResponse for Error {
                 StatusCode::BAD_REQUEST,
                 1200,
                 "Deserialize Websocket event error".to_string(),
+            ),
+            Error::PollCancelled => (StatusCode::BAD_REQUEST, 1300, "Poll cancelled".to_string()),
+            Error::UnsupportedWebsocketEvent => (
+                StatusCode::BAD_REQUEST,
+                1400,
+                "Unsupported websocket event".to_string(),
+            ),
+
+            Error::AdminPrivilegesRequired => (
+                StatusCode::BAD_REQUEST,
+                1500,
+                "Admin privileges required".to_string(),
             ),
         };
         (

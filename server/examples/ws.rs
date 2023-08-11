@@ -42,7 +42,6 @@ async fn websocket_handler(
     State(state): State<Arc<AppState>>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
 ) -> impl IntoResponse {
-    let addr = addr.clone();
     ws.on_upgrade(move |socket| websocket(socket, state, addr))
 }
 

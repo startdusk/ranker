@@ -17,13 +17,13 @@ pub struct Nomination {
 
 pub type Nominations = HashMap<NominationID, Nomination>;
 
-pub type Rankings = HashMap<String, Vec<NominationID>>;
+pub type Rankings = HashMap<String, Box<Vec<NominationID>>>;
 
 #[derive(Debug, Serialize, Clone, Deserialize, PartialEq, Eq)]
 pub struct Result {
     pub nomination_id: NominationID,
     pub nomination_text: String,
-    pub score: usize,
+    pub score: String,
 }
 
 pub type Results = Vec<Result>;
@@ -54,6 +54,45 @@ impl Poll {
 
     pub fn string(&self) -> String {
         serde_json::to_string(self).unwrap()
+    }
+
+    pub fn get_results(&self) -> Results {
+        // 1. Each value of `rankings` key values is an array of a participants'
+        // vote. Points for each array element corresponds to following formula:
+        // r_n = ((votesPerVoter - 0.5*n) / votesPerVoter)^(n+1), where n corresponds
+        // to array index of rankings.
+        // Accumulate score per nominationID
+        let mut scores: HashMap<NominationID, f64> = HashMap::new();
+
+        let votes_per_voter = self.votes_per_voter as f64;
+        for pre_rankings in self.rankings.values() {
+            for (n, nomination_id) in pre_rankings.iter().enumerate() {
+                let vote_value =
+                    ((votes_per_voter - 0.5 * n as f64) / votes_per_voter).powf(n as f64 + 1.0);
+
+                *scores.entry(nomination_id.clone()).or_insert(0.0) += vote_value;
+            }
+        }
+
+        // 2. Take nominationID to score mapping, and merge in nominationText
+        // and nominationID into value
+        let mut results: Results = scores
+            .into_iter()
+            .map(|(nomination_id, score)| Result {
+                nomination_id: nomination_id.clone(),
+                nomination_text: self.nominations[&nomination_id].text.clone(),
+                score: score.to_string(),
+            })
+            .collect();
+
+        // 3. Sort values by score in descending order
+        results.sort_by(|res1, res2| {
+            let score1 = res1.score.parse::<f64>().unwrap();
+            let score2 = res2.score.parse::<f64>().unwrap();
+            score1.partial_cmp(&score2).unwrap()
+        });
+
+        results
     }
 }
 

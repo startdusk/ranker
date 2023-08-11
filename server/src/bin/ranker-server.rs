@@ -4,6 +4,7 @@ use axum::{
 };
 use server::{
     handlers::not_found,
+    models::room::Rooms,
     services::{polls, ws},
     state::{AppState, Config},
 };
@@ -29,6 +30,7 @@ async fn main() -> anyhow::Result<()> {
     let app_state = Arc::new(AppState {
         env: config.clone(),
         tx,
+        rooms: Rooms::new(),
     });
 
     let client_allow_origin = format!("{}:{}", config.client_domain, config.client_port);

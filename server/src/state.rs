@@ -1,6 +1,8 @@
 use serde::Deserialize;
 use tokio::sync::broadcast;
 
+use crate::models::room::Rooms;
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     pub server_http_port: u16,
@@ -17,4 +19,6 @@ pub struct AppState {
     pub env: Config,
     // Channel used to send messages to all connected clients.
     pub tx: broadcast::Sender<String>,
+
+    pub rooms: Rooms,
 }
