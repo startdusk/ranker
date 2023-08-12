@@ -74,7 +74,7 @@ async fn handle_socket(
 
     let mut rooms = state.rooms.clone();
 
-    rooms
+    let mut vote = rooms
         .add_client(
             poll_id.clone(),
             RoomClient {
@@ -88,14 +88,14 @@ async fn handle_socket(
 
     // Now send the "joined" message to all subscribers.
     let msg = WebSocketEvent::PollUpdated(Box::new(poll)).message();
-    let _ = state.tx.send(msg);
+    vote.broadcast(msg);
 
     // By splitting, we can send and receive at the same time.
     let (sender, mut receiver) = socket.split();
     let sender = Arc::new(Mutex::new(RefCell::new(sender)));
     // We subscribe *before* sending the "joined" message, so that we will also
     // display it to our client.
-    let mut rx = state.tx.subscribe();
+    let mut rx = vote.subscribe();
 
     let server_sender = sender.clone();
     // server -> client
@@ -110,9 +110,24 @@ async fn handle_socket(
         }
     });
 
+    // notify
+    // let mut rooms = state.rooms.clone();
+    let room_id_clone = poll_id.clone();
+    let mut rx = state.notify_tx.subscribe();
+    let mut notify_task = tokio::spawn(async move {
+        while let Ok(room_id) = rx.recv().await {
+            if room_id_clone == room_id {
+                break;
+            }
+        }
+
+        // TODO: how to delete room cache
+        // rooms.remove(room_id_clone).await;
+    });
+
     let client_sender = sender.clone();
     // Clone things we want to pass (move) to the receiving task.
-    let tx = state.tx.clone();
+    let mut tx = vote.clone();
     let poll_id = poll_id.clone();
     let mut rooms = state.rooms.clone();
     // client -> server
@@ -127,7 +142,7 @@ async fn handle_socket(
                         break;
                     };
                     let message = WebSocketEvent::PollUpdated(Box::new(poll)).message();
-                    let _ = tx.send(message);
+                    tx.broadcast(message);
                     break;
                 }
                 Message::Text(text) => {
@@ -159,6 +174,9 @@ async fn handle_socket(
                             }
                         }
                         WebSocketEvent::RemoveNomination(nomination_id) => {
+                            rooms
+                                .remove_nomination(poll_id.clone(), nomination_id.clone())
+                                .await;
                             polls::remove_nomination(&mut con, poll_id.clone(), nomination_id).await
                         }
                         WebSocketEvent::StartVote => {
@@ -193,7 +211,7 @@ async fn handle_socket(
                         match err {
                             Error::PollCancelled => {
                                 let message = WebSocketEvent::PollCancelled.message();
-                                let _ = tx.send(message);
+                                tx.broadcast(message);
 
                                 // we're completed this vote
                                 // delete room info
@@ -211,7 +229,7 @@ async fn handle_socket(
                     }
                     let poll = event.unwrap();
                     let message = WebSocketEvent::PollUpdated(Box::new(poll)).message();
-                    let _ = tx.send(message);
+                    tx.broadcast(message);
                 }
                 _ => {}
             }
@@ -220,14 +238,19 @@ async fn handle_socket(
 
     // If any one of the tasks run to completion, we abort the other.
     tokio::select! {
-        _ = (&mut send_task) => recv_task.abort(),
-        _ = (&mut recv_task) => send_task.abort(),
+        _ = (&mut send_task) => {
+            notify_task.abort();
+            recv_task.abort()
+        }
+        _ = (&mut recv_task) => {
+            notify_task.abort();
+            send_task.abort()
+        },
+        _ = (&mut notify_task) => {
+            recv_task.abort();
+            send_task.abort()
+        }
     };
-
-    let msg = format!("{} left.", name);
-    let _ = state.tx.send(msg.to_string());
-
-    println!("{msg}");
 }
 
 async fn cancel_poll(

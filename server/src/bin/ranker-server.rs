@@ -3,6 +3,7 @@ use axum::{
     Extension, Router,
 };
 use server::{
+    data::redis::{polls::POLL_KEY_PREFIX, redis_keyspace_notifications},
     handlers::not_found,
     models::room::Rooms,
     services::{polls, ws},
@@ -22,15 +23,15 @@ async fn main() -> anyhow::Result<()> {
 
     let redis_url = format!("redis://{}:{}/", config.redis_host, config.redis_port);
     let client = redis::Client::open(redis_url)?;
-    let redis_mgr = redis::aio::ConnectionManager::new(client).await?;
-    let (tx, _rx) = broadcast::channel(100);
+    let redis_mgr = redis::aio::ConnectionManager::new(client.clone()).await?;
 
     let middleware_stack = ServiceBuilder::new().layer(Extension(redis_mgr));
 
+    let (notify_tx, _rx) = broadcast::channel(100);
     let app_state = Arc::new(AppState {
         env: config.clone(),
-        tx,
         rooms: Rooms::new(),
+        notify_tx: notify_tx.clone(),
     });
 
     let client_allow_origin = format!("{}:{}", config.client_domain, config.client_port);
@@ -49,14 +50,36 @@ async fn main() -> anyhow::Result<()> {
         .layer(middleware_stack)
         .layer(cors_layer);
 
+    let notifier = async {
+        redis_keyspace_notifications(client, |mut key| {
+            let key = key.split_off(POLL_KEY_PREFIX.len());
+            let _ = notify_tx.send(key);
+        })
+        .await?;
+
+        Ok(()) as anyhow::Result<()>
+    };
+
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], config.server_http_port));
-    println!("listening on {}", addr);
-    hyper::Server::bind(&addr)
-        .serve(app.into_make_service_with_connect_info::<SocketAddr>())
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
-    Ok(())
+    let server = async {
+        println!("listening on {}", addr);
+        axum::Server::bind(&addr)
+            .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+            .with_graceful_shutdown(shutdown_signal())
+            .await?;
+
+        Ok(()) as anyhow::Result<()>
+    };
+
+    tokio::select! {
+        res = server => {
+            Ok(res?)
+        }
+        res = notifier => {
+            Ok(res?)
+        }
+    }
 }
 
 async fn shutdown_signal() {

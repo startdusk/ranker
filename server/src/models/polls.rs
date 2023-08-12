@@ -63,7 +63,7 @@ impl Poll {
         // vote. Points for each array element corresponds to following formula:
         // r_n = ((votesPerVoter - 0.5*n) / votesPerVoter)^(n+1), where n corresponds
         // to array index of rankings.
-        // Accumulate score per nominationID
+        // Accumulate score per NominationID
         let mut scores: HashMap<NominationID, f64> = HashMap::new();
 
         let votes_per_voter = self.votes_per_voter as f64;
@@ -76,8 +76,8 @@ impl Poll {
             }
         }
 
-        // 2. Take nominationID to score mapping, and merge in nominationText
-        // and nominationID into value
+        // 2. Take NominationID to score mapping, and merge in nomination_text
+        // and NominationID into value
         let mut results: Results = scores
             .into_iter()
             .map(|(nomination_id, score)| Result {

@@ -5,6 +5,8 @@ use crate::{
     Error,
 };
 
+pub const POLL_KEY_PREFIX: &str = "polls:";
+
 pub async fn add_poll(
     con: &mut ConnectionManager,
     ttl: usize,
@@ -223,22 +225,6 @@ pub async fn del_poll(con: &mut ConnectionManager, poll_id: String) -> Result<()
     Ok(())
 }
 
-fn make_key(poll_id: String) -> String {
-    format!("polls:{}", poll_id)
-}
-
-fn make_participant_path(user_id: String) -> String {
-    format!(".participants.{}", user_id)
-}
-
-fn make_nomination_path(nomination_id: NominationID) -> String {
-    format!(".nominations.{}", nomination_id)
-}
-
-fn make_rankings_path(user_id: String) -> String {
-    format!(".rankings.{}", user_id)
-}
-
 async fn set_path_value(
     con: &mut ConnectionManager,
     key: String,
@@ -302,4 +288,20 @@ async fn remove_path_value(
 
     let poll: Poll = poll_json.try_into()?;
     Ok(poll)
+}
+
+fn make_key(poll_id: String) -> String {
+    format!("{}{}", POLL_KEY_PREFIX, poll_id)
+}
+
+fn make_participant_path(user_id: String) -> String {
+    format!(".participants.{}", user_id)
+}
+
+fn make_nomination_path(nomination_id: NominationID) -> String {
+    format!(".nominations.{}", nomination_id)
+}
+
+fn make_rankings_path(user_id: String) -> String {
+    format!(".rankings.{}", user_id)
 }

@@ -17,8 +17,8 @@ pub struct Config {
 #[derive(Clone)]
 pub struct AppState {
     pub env: Config,
-    // Channel used to send messages to all connected clients.
-    pub tx: broadcast::Sender<String>,
 
     pub rooms: Rooms,
+
+    pub notify_tx: broadcast::Sender<String>,
 }
