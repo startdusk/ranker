@@ -8,8 +8,7 @@ pub struct Config {
     pub server_http_port: u16,
     pub client_domain: String,
     pub client_port: u16,
-    pub redis_host: String,
-    pub redis_port: String,
+    pub redis_url: String,
     pub poll_duration: usize,
     pub jwt_secret: String,
 }

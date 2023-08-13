@@ -17,11 +17,9 @@ use tower_http::cors::CorsLayer;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
-    let Ok(config) = envy::prefixed("RANKER_").from_env::<Config>() else {
-        panic!("env not set")
-    };
+    let config = envy::prefixed("RANKER_").from_env::<Config>()?;
 
-    let redis_url = format!("redis://{}:{}/", config.redis_host, config.redis_port);
+    let redis_url = config.redis_url.clone();
     let client = redis::Client::open(redis_url)?;
     let redis_mgr = redis::aio::ConnectionManager::new(client.clone()).await?;
 
@@ -61,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     // run it
-    let addr = SocketAddr::from(([127, 0, 0, 1], config.server_http_port));
+    let addr = SocketAddr::from(([0, 0, 0, 0], config.server_http_port));
     let server = async {
         println!("listening on {}", addr);
         axum::Server::bind(&addr)

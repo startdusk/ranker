@@ -7,5 +7,33 @@ services:
       - '6379:6379'
     volumes:
       - 'redisdata:/data'
+    networks:
+      - ranker-net
+
+  ranker-server:
+    build:
+      dockerfile: Dockerfile
+      context: ./server
+    depends_on:
+      redis:
+        condition: service_started
+    networks:
+      - ranker-net
+    ports:
+      - "3000:3000"
+    expose:
+      - 3000
+    environment:
+      RANKER_SERVER_HTTP_PORT: 3000
+      RANKER_CLIENT_DOMAIN: http://localhost
+      RANKER_CLIENT_PORT: 8080
+      RANKER_REDIS_URL: 'redis://@redis:6379'
+      RANKER_POLL_DURATION: 7200
+      RANKER_JWT_SECRET: wowthisismysecret_dd757a9f-3fb1-4306-a20a-ac67d4f2b7c0
+
 volumes:
   redisdata:
+
+
+networks:
+  ranker-net:
