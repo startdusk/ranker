@@ -24,13 +24,10 @@ use futures::{
 };
 
 use crate::{
+    auth::{self, Authed},
     data::redis::polls,
     ids::create_nomination_id,
-    models::{
-        authed::{self, Authed},
-        room::RoomClient,
-        Nomination, Poll, WebSocketEvent,
-    },
+    models::{room::RoomClient, Nomination, Poll, WebSocketEvent},
     state::AppState,
     Error,
 };
@@ -47,7 +44,7 @@ pub async fn ws_handler(
     };
 
     let token = token.0.token();
-    let Ok(auth) = authed::verify(token.to_string()) else {
+    let Ok(auth) = auth::verify(token.to_string()) else {
         return Error::InvalidToken.into_response();
     };
 

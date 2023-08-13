@@ -4,8 +4,8 @@ use axum::{middleware::from_extractor, routing::post, Router};
 use tower::ServiceBuilder;
 
 use crate::{
+    auth::{Authed, Tokened},
     handlers::polls,
-    models::authed::{Authed, Tokened},
     state::AppState,
 };
 

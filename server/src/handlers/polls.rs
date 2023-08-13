@@ -4,12 +4,10 @@ use axum::{extract::State, Extension, Json};
 use redis::aio::ConnectionManager;
 
 use crate::{
+    auth::{self, Authed},
     data::redis::polls,
     ids::{create_poll_id, create_user_id},
-    models::{
-        authed::{self, Authed},
-        AddPollReq, AddPollResp, JoinPollReq, JoinPollResp, Poll,
-    },
+    models::{AddPollReq, AddPollResp, JoinPollReq, JoinPollResp, Poll},
     state::AppState,
     Error, UnifyResponse, ValidatedInput,
 };
@@ -31,7 +29,7 @@ pub async fn add(
         user_id.clone(),
     )
     .await?;
-    let access_token = authed::token_gen(poll_id, user_id, input.name, ttl)?;
+    let access_token = auth::token_gen(poll_id, user_id, input.name, ttl)?;
     let add_poll_resp = AddPollResp { poll, access_token };
     Ok(UnifyResponse::ok(Some(add_poll_resp)).json())
 }
@@ -46,7 +44,7 @@ pub async fn join(
     let poll_id = input.poll_id;
     let poll = polls::get_poll(&mut con, poll_id.clone()).await?;
 
-    let access_token = authed::token_gen(poll_id, user_id, input.name, ttl)?;
+    let access_token = auth::token_gen(poll_id, user_id, input.name, ttl)?;
     let join_poll_resp = JoinPollResp { poll, access_token };
     Ok(UnifyResponse::ok(Some(join_poll_resp)).json())
 }
