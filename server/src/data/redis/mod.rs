@@ -41,7 +41,6 @@ where
 
         println!("Received a new notification payload: {:#?}", key.clone());
 
-        // TODO: how notify others
         f(key)
     }
 }

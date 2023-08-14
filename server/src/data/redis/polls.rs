@@ -339,14 +339,11 @@ mod tests {
     use super::*;
     use futures::FutureExt;
     use mockall::mock;
-    use redis::Cmd;
-    use redis::Pipeline;
-    use redis::RedisFuture;
-    use redis::Value;
+    use redis::{Cmd, ErrorKind, Pipeline, RedisError, RedisFuture, Value};
 
     mock! {
         pub ConnectionLike {
-            fn mock_returning(&mut self) -> String;
+            fn mock_returning(&mut self) -> Result<String, RedisError>;
         }
     }
 
@@ -355,8 +352,13 @@ mod tests {
     // own trait without lifetimes and generics and implement it for redis::aio::ConnectionLike.
     impl redis::aio::ConnectionLike for MockConnectionLike {
         fn req_packed_command<'a>(&'a mut self, _cmd: &'a Cmd) -> RedisFuture<'a, Value> {
-            let data = self.mock_returning().as_bytes().to_vec();
-            (async move { Ok(redis::Value::Data(data)) }).boxed()
+            match self.mock_returning() {
+                Ok(data) => {
+                    let data = data.as_bytes().to_vec();
+                    (async move { Ok(redis::Value::Data(data)) }).boxed()
+                }
+                Err(err) => (async move { Err(err) }).boxed(),
+            }
         }
 
         fn req_packed_commands<'a>(
@@ -376,7 +378,68 @@ mod tests {
     #[tokio::test]
     async fn test_set_path_value_should_error() {
         let mut con = MockConnectionLike::new();
-        con.mock_returning.expect().returning(|| "-1".to_string());
+
+        con.mock_returning.expect().returning(|| {
+            Err(RedisError::from((
+                ErrorKind::TypeError,
+                "custom_redis_error",
+                "".to_string(),
+            )))
+        });
+        let Err(err) = set_path_value(
+            &mut con,
+            "key".to_string(),
+            "path".to_string(),
+            "value".to_string(),
+        )
+        .await else {
+            panic!("error")
+        };
+        assert_eq!(
+            err,
+            Error::RedisError(RedisError::from((
+                ErrorKind::TypeError,
+                "custom_redis_error",
+                "".to_string()
+            )))
+        )
+    }
+
+    #[tokio::test]
+    async fn test_remove_path_value_should_error() {
+        let mut con = MockConnectionLike::new();
+
+        con.mock_returning.expect().returning(|| {
+            Err(RedisError::from((
+                ErrorKind::TypeError,
+                "custom_redis_error",
+                "".to_string(),
+            )))
+        });
+        let Err(err) = remove_path_value(
+            &mut con,
+            "key".to_string(),
+            "path".to_string(),
+        )
+        .await else {
+            panic!("error")
+        };
+        assert_eq!(
+            err,
+            Error::RedisError(RedisError::from((
+                ErrorKind::TypeError,
+                "custom_redis_error",
+                "".to_string()
+            )))
+        )
+    }
+
+    #[tokio::test]
+    async fn test_set_path_value_should_not_found() {
+        let mut con = MockConnectionLike::new();
+        con.mock_returning
+            .expect()
+            .returning(|| Ok("-1".to_string()));
         let Err(err) = set_path_value(
             &mut con,
             "key".to_string(),
@@ -390,9 +453,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_remove_path_value_should_error() {
+    async fn test_remove_path_value_should_not_found() {
         let mut con = MockConnectionLike::new();
-        con.mock_returning.expect().returning(|| "-1".to_string());
+        con.mock_returning
+            .expect()
+            .returning(|| Ok("-1".to_string()));
         let Err(err) = remove_path_value(
             &mut con,
             "key".to_string(),
