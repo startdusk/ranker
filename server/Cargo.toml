@@ -38,3 +38,6 @@ validator = { version = "0.16.1", features = ["derive"] }
 
 [profile.release]
 strip = true
+
+[dev-dependencies]
+mockall = "0.11.4"

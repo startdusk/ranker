@@ -63,6 +63,20 @@ pub enum Error {
     NoNomination,
 }
 
+impl PartialEq for Error {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            // They have same type
+            (Self::ValidationError(_l0), Self::ValidationError(_r0)) => true,
+            (Self::AxumFormRejection(_l0), Self::AxumFormRejection(_r0)) => true,
+            (Self::DeserializeJsonError(_l0), Self::DeserializeJsonError(_r0)) => true,
+            (Self::RedisError(_l0), Self::RedisError(_r0)) => true,
+
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
+}
+
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
         let (status_code, err_code, error_message) = match self {
