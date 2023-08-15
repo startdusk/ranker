@@ -34,12 +34,8 @@ where
 			continue
    	    };
 
-        println!("Received a new notification: {:#?}", msg);
-
         /* Retrieve the key, and split it into prefix and slug */
         let key: String = msg.get_payload()?;
-
-        println!("Received a new notification payload: {:#?}", key.clone());
 
         f(key)
     }

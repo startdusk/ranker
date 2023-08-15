@@ -1,5 +1,5 @@
 use axum::{
-    http::{HeaderValue, Method},
+    http::{HeaderValue, Method, Request},
     Extension, Router,
 };
 use server::{
@@ -12,7 +12,9 @@ use server::{
 use std::{net::SocketAddr, sync::Arc};
 use tokio::{signal, sync::broadcast};
 use tower::ServiceBuilder;
-use tower_http::cors::CorsLayer;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
+use tracing::info_span;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -38,6 +40,17 @@ async fn main() -> anyhow::Result<()> {
         .allow_origin(client_allow_origin.parse::<HeaderValue>().unwrap())
         .allow_methods([Method::GET, Method::POST]);
 
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                // axum logs rejections from built-in extractors with the `axum::rejection`
+                // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
+                "ranker_logging=debug,tower_http=debug,axum::rejection=trace".into()
+            }),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
     // build our application with a route
     let app = Router::new()
         .nest(
@@ -47,7 +60,41 @@ async fn main() -> anyhow::Result<()> {
         .nest("/polls", ws::service(app_state))
         .fallback(not_found::handler_404)
         .layer(middleware_stack)
-        .layer(cors_layer);
+        .layer(cors_layer)
+        .layer(
+            TraceLayer::new_for_http().make_span_with(|request: &Request<_>| {
+                // Log the matched route's path (with placeholders not filled in).
+                // Use request.uri() or OriginalUri if you want the real path.
+                let matched_path = request.uri().to_string();
+
+                info_span!(
+                    "http_request",
+                    method = ?request.method(),
+                    matched_path,
+                    some_other_field = tracing::field::Empty,
+                )
+            }), // .on_request(|_request: &Request<_>, _span: &Span| {
+                //     // You can use `_span.record("some_other_field", value)` in one of these
+                //     // closures to attach a value to the initially empty field in the info_span
+                //     // created above.
+                // })
+                // .on_response(|_response: &Response, _latency: Duration, _span: &Span| {
+                //     // ...
+                // })
+                // .on_body_chunk(|_chunk: &Bytes, _latency: Duration, _span: &Span| {
+                //     // ...
+                // })
+                // .on_eos(
+                //     |_trailers: Option<&HeaderMap>, _stream_duration: Duration, _span: &Span| {
+                //         // ...
+                //     },
+                // )
+                // .on_failure(
+                //     |_error: ServerErrorsFailureClass, _latency: Duration, _span: &Span| {
+                //         // ...
+                //     },
+                // ),
+        );
 
     let notifier = async {
         redis_keyspace_notifications(client, |mut key| {
