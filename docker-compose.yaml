@@ -28,7 +28,7 @@ services:
       RANKER_CLIENT_DOMAIN: http://localhost
       RANKER_CLIENT_PORT: 8080
       RANKER_REDIS_URL: 'redis://@redis:6379'
-      RANKER_POLL_DURATION: 7200
+      RANKER_POLL_DURATION: 10
       RANKER_JWT_SECRET: wowthisismysecret_dd757a9f-3fb1-4306-a20a-ac67d4f2b7c0
 
 volumes:

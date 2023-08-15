@@ -1,10 +1,12 @@
+use std::sync::Arc;
+
 use serde::Deserialize;
 use tokio::sync::broadcast;
 
 use crate::models::room::Rooms;
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct Config {
+pub struct EnvConfig {
     pub server_http_port: u16,
     pub client_domain: String,
     pub client_port: u16,
@@ -13,11 +15,11 @@ pub struct Config {
     pub jwt_secret: String,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct AppState {
-    pub env: Config,
+    pub env: EnvConfig,
 
-    pub rooms: Rooms,
+    pub rooms: Arc<Rooms>,
 
     pub notify_tx: broadcast::Sender<String>,
 }

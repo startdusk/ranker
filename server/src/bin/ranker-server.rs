@@ -7,7 +7,7 @@ use server::{
     handlers::not_found,
     models::room::Rooms,
     services::{polls, ws},
-    state::{AppState, Config},
+    state::{AppState, EnvConfig},
 };
 use std::{net::SocketAddr, sync::Arc};
 use tokio::{signal, sync::broadcast};
@@ -17,7 +17,7 @@ use tower_http::cors::CorsLayer;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
-    let config = envy::prefixed("RANKER_").from_env::<Config>()?;
+    let config = envy::prefixed("RANKER_").from_env::<EnvConfig>()?;
 
     let redis_url = config.redis_url.clone();
     let client = redis::Client::open(redis_url)?;
@@ -26,9 +26,10 @@ async fn main() -> anyhow::Result<()> {
     let middleware_stack = ServiceBuilder::new().layer(Extension(redis_mgr));
 
     let (notify_tx, _rx) = broadcast::channel(100);
+    let rooms = Arc::new(Rooms::default());
     let app_state = Arc::new(AppState {
         env: config.clone(),
-        rooms: Rooms::new(),
+        rooms: rooms.clone(),
         notify_tx: notify_tx.clone(),
     });
 

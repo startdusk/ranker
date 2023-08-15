@@ -6,16 +6,18 @@ use redis::aio::ConnectionManager;
 use crate::{
     auth::{self, Authed},
     data::redis::polls,
-    ids::{create_poll_id, create_user_id},
+    errors::Error,
+    handlers::UnifyResponse,
     models::{AddPollReq, AddPollResp, JoinPollReq, JoinPollResp, Poll},
+    shared::ids::{create_poll_id, create_user_id},
     state::AppState,
-    Error, UnifyResponse, ValidatedInput,
+    validate::Input,
 };
 
 pub async fn add(
     State(state): State<Arc<AppState>>,
     Extension(mut con): Extension<ConnectionManager>,
-    ValidatedInput(input): ValidatedInput<AddPollReq>,
+    Input(input): Input<AddPollReq>,
 ) -> Result<Json<UnifyResponse<AddPollResp>>, Error> {
     let ttl = state.env.poll_duration;
     let poll_id = create_poll_id();
@@ -37,7 +39,7 @@ pub async fn add(
 pub async fn join(
     State(state): State<Arc<AppState>>,
     Extension(mut con): Extension<ConnectionManager>,
-    ValidatedInput(input): ValidatedInput<JoinPollReq>,
+    Input(input): Input<JoinPollReq>,
 ) -> Result<Json<UnifyResponse<JoinPollResp>>, Error> {
     let ttl = state.env.poll_duration;
     let user_id = create_user_id();

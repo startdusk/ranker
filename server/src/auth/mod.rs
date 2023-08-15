@@ -1,4 +1,4 @@
-use crate::Error;
+use crate::errors::Error;
 use async_trait::async_trait;
 use axum::extract::{FromRequestParts, Query};
 use axum::http::request::Parts;

@@ -7,7 +7,7 @@ use axum::{
     response::IntoResponse,
     Extension,
 };
-use redis::aio::ConnectionManager;
+use redis::aio::{ConnectionLike, ConnectionManager};
 use tokio::sync::Mutex;
 use validator::Validate;
 
@@ -26,10 +26,13 @@ use futures::{
 use crate::{
     auth::{self, Authed},
     data::redis::polls,
-    ids::create_nomination_id,
-    models::{room::RoomClient, Nomination, Poll, WebSocketEvent},
+    errors::Error,
+    models::{
+        room::{RoomClient, Rooms},
+        Nomination, Poll, RankingList, WebSocketEvent,
+    },
+    shared::ids::create_nomination_id,
     state::AppState,
-    Error,
 };
 
 pub async fn ws_handler(
@@ -69,8 +72,7 @@ async fn handle_socket(
         return;
     };
 
-    let mut rooms = state.rooms.clone();
-
+    let rooms = state.rooms.clone();
     let mut vote = rooms
         .add_client(
             poll_id.clone(),
@@ -119,14 +121,14 @@ async fn handle_socket(
         }
 
         // TODO: how to delete room cache
-        // rooms.remove(room_id_clone).await;
+        rooms.remove(room_id_clone).await;
     });
 
     let client_sender = sender.clone();
     // Clone things we want to pass (move) to the receiving task.
     let mut tx = vote.clone();
     let poll_id = poll_id.clone();
-    let mut rooms = state.rooms.clone();
+    let rooms = state.rooms.clone();
     // client -> server
     let mut recv_task = tokio::spawn(async move {
         while let Some(Ok(msg)) = receiver.next().await {
@@ -180,20 +182,14 @@ async fn handle_socket(
                             start_vote(&mut con, poll_id.clone(), user_id.clone()).await
                         }
                         WebSocketEvent::SubmitRankings(rankings) => {
-                            if !rooms
-                                .contains_nomination(poll_id.clone(), rankings.clone())
-                                .await
-                            {
-                                Err(Error::UnknownNomination)
-                            } else {
-                                polls::add_participant_rankings(
-                                    &mut con,
-                                    poll_id.clone(),
-                                    user_id.clone(),
-                                    rankings,
-                                )
-                                .await
-                            }
+                            submit_rankings(
+                                &mut con,
+                                poll_id.clone(),
+                                user_id.clone(),
+                                rooms.clone(),
+                                rankings,
+                            )
+                            .await
                         }
 
                         WebSocketEvent::ClosePoll => {
@@ -250,11 +246,10 @@ async fn handle_socket(
     };
 }
 
-async fn cancel_poll(
-    con: &mut ConnectionManager,
-    poll_id: String,
-    user_id: String,
-) -> Result<Poll, Error> {
+async fn cancel_poll<C>(con: &mut C, poll_id: String, user_id: String) -> Result<Poll, Error>
+where
+    C: ConnectionLike,
+{
     let poll = polls::get_poll(con, poll_id.clone()).await?;
     if poll.admin_id != user_id {
         return Err(Error::AdminPrivilegesRequired);
@@ -263,11 +258,10 @@ async fn cancel_poll(
     Err(Error::PollCancelled)
 }
 
-async fn close_poll(
-    con: &mut ConnectionManager,
-    poll_id: String,
-    user_id: String,
-) -> Result<Poll, Error> {
+async fn close_poll<C>(con: &mut C, poll_id: String, user_id: String) -> Result<Poll, Error>
+where
+    C: ConnectionLike,
+{
     let poll = polls::get_poll(con, poll_id.clone()).await?;
     if poll.admin_id != user_id {
         return Err(Error::AdminPrivilegesRequired);
@@ -276,11 +270,10 @@ async fn close_poll(
     polls::add_results(con, poll_id.clone(), results).await
 }
 
-async fn start_vote(
-    con: &mut ConnectionManager,
-    poll_id: String,
-    user_id: String,
-) -> Result<Poll, Error> {
+async fn start_vote<C>(con: &mut C, poll_id: String, user_id: String) -> Result<Poll, Error>
+where
+    C: ConnectionLike,
+{
     let poll = polls::get_poll(con, poll_id.clone()).await?;
     if poll.admin_id != user_id {
         return Err(Error::AdminPrivilegesRequired);
@@ -289,6 +282,25 @@ async fn start_vote(
         return Err(Error::NoNomination);
     }
     polls::start_poll(con, poll_id.clone()).await
+}
+
+async fn submit_rankings<C>(
+    con: &mut C,
+    poll_id: String,
+    user_id: String,
+    rooms: Arc<Rooms>,
+    rankings: RankingList,
+) -> Result<Poll, Error>
+where
+    C: ConnectionLike,
+{
+    if !rooms
+        .contains_nomination(poll_id.clone(), rankings.clone())
+        .await
+    {
+        return Err(Error::UnknownNomination);
+    }
+    polls::add_participant_rankings(con, poll_id, user_id, rankings).await
 }
 
 async fn send_message(

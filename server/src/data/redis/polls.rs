@@ -1,8 +1,8 @@
 use redis::{aio::ConnectionLike, cmd};
 
 use crate::{
+    errors::Error,
     models::{Nomination, NominationID, Poll, RankingList, Results},
-    Error,
 };
 
 pub const POLL_KEY_PREFIX: &str = "polls:";
@@ -393,7 +393,7 @@ mod tests {
             "value".to_string(),
         )
         .await else {
-            panic!("error")
+            panic!("should be error but not error")
         };
         assert_eq!(
             err,
@@ -422,7 +422,7 @@ mod tests {
             "path".to_string(),
         )
         .await else {
-            panic!("error")
+            panic!("should be error but not error")
         };
         assert_eq!(
             err,
@@ -447,7 +447,7 @@ mod tests {
             "value".to_string(),
         )
         .await else {
-            panic!("error")
+            panic!("should be error but not error")
         };
         assert_eq!(err, Error::PollNotFound)
     }
@@ -464,7 +464,7 @@ mod tests {
             "path".to_string(),
         )
         .await else {
-            panic!("error")
+            panic!("should be error but not error")
         };
         assert_eq!(err, Error::PollNotFound)
     }

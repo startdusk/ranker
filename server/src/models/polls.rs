@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::Error;
+use crate::errors::Error;
 
 pub type NominationID = String;
 
