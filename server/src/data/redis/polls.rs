@@ -375,6 +375,14 @@ mod tests {
         }
     }
 
+    #[test]
+    fn test_make_key() {
+        let poll_id = "123".to_string();
+        let key = make_key(poll_id.clone());
+        let expect_key = format!("{POLL_KEY_PREFIX}{poll_id}");
+        assert_eq!(expect_key, key)
+    }
+
     #[tokio::test]
     async fn test_set_path_value_should_error() {
         let mut con = MockConnectionLike::new();

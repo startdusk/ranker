@@ -61,7 +61,7 @@ impl Poll {
     pub fn get_results(&self) -> Results {
         // 1. Each value of `rankings` key values is an array of a participants'
         // vote. Points for each array element corresponds to following formula:
-        // r_n = ((votesPerVoter - 0.5*n) / votesPerVoter)^(n+1), where n corresponds
+        // r_n = ((votes_per_voter - 0.5*n) / votes_per_voter)^(n+1), where n corresponds
         // to array index of rankings.
         // Accumulate score per NominationID
         let mut scores: HashMap<NominationID, f64> = HashMap::new();

@@ -29,7 +29,7 @@ use crate::{
     errors::Error,
     models::{
         room::{RoomClient, Rooms},
-        Nomination, Poll, RankingList, WebSocketEvent,
+        AddNominationReq, Nomination, Poll, RankingList, WebSocketEvent,
     },
     shared::ids::create_nomination_id,
     state::AppState,
@@ -110,7 +110,6 @@ async fn handle_socket(
     });
 
     // notify
-    // let mut rooms = state.rooms.clone();
     let room_id_clone = poll_id.clone();
     let mut rx = state.notify_tx.subscribe();
     let mut notify_task = tokio::spawn(async move {
@@ -152,25 +151,16 @@ async fn handle_socket(
                         }
 
                         WebSocketEvent::Nomination(nomination) => {
-                            if let Err(err) = nomination.validate() {
-                                Err(Error::ValidationError(err))
-                            } else {
-                                let nomination_id = create_nomination_id();
-                                rooms
-                                    .add_nomination(poll_id.clone(), nomination_id.clone())
-                                    .await;
-                                let nomination = Nomination {
-                                    text: nomination.text,
-                                    user_id: user_id.clone(),
-                                };
-                                polls::add_nomination(
-                                    &mut con,
-                                    poll_id.clone(),
-                                    nomination_id,
-                                    nomination,
-                                )
-                                .await
-                            }
+                            let nomination_id = create_nomination_id();
+                            add_nomination(
+                                &mut con,
+                                poll_id.clone(),
+                                user_id.clone(),
+                                nomination_id,
+                                rooms.clone(),
+                                nomination,
+                            )
+                            .await
                         }
                         WebSocketEvent::RemoveNomination(nomination_id) => {
                             rooms
@@ -282,6 +272,31 @@ where
         return Err(Error::NoNomination);
     }
     polls::start_poll(con, poll_id.clone()).await
+}
+
+async fn add_nomination<C>(
+    con: &mut C,
+    poll_id: String,
+    user_id: String,
+    nomination_id: String,
+    rooms: Arc<Rooms>,
+    nomination: AddNominationReq,
+) -> Result<Poll, Error>
+where
+    C: ConnectionLike,
+{
+    if let Err(err) = nomination.validate() {
+        return Err(Error::ValidationError(err));
+    }
+    rooms
+        .add_nomination(poll_id.clone(), nomination_id.clone())
+        .await;
+    let nomination = Nomination {
+        text: nomination.text,
+        user_id,
+    };
+
+    polls::add_nomination(con, poll_id, nomination_id, nomination).await
 }
 
 async fn submit_rankings<C>(
