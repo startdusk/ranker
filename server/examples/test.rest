@@ -26,5 +26,6 @@ Accept: application/json
 Content-Type: application/json
 
 {
-    "abc": 123
+    "name": "name",
+    "poll_id": "8A5XU0"
 }

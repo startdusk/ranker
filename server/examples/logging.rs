@@ -9,23 +9,33 @@ use axum::{
 use serde::Serialize;
 use std::net::SocketAddr;
 use tower::ServiceBuilder;
-use tower_http::ServiceBuilderExt;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tower_http::{
+    trace::{self, TraceLayer},
+    ServiceBuilderExt,
+};
+use tracing::Level;
+use tracing_appender::rolling;
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "logging=info".into()), // filter name equal you crate name
-        )
-        .with(tracing_subscriber::fmt::layer())
+    let info_file = rolling::daily("./logs", "log");
+    tracing_subscriber::fmt()
+        .with_writer(info_file)
+        .with_target(false)
+        .json()
         .init();
 
     let app = Router::new().route("/", post(handler)).layer(
         ServiceBuilder::new()
             .map_request_body(body::boxed)
-            .layer(middleware::from_fn(log_request_and_response_body)),
+            .layer(middleware::from_fn(log_request_and_response_body))
+            .layer(
+                TraceLayer::new_for_http()
+                    .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
+                    .on_request(trace::DefaultOnRequest::new().level(Level::INFO))
+                    .on_body_chunk(trace::DefaultOnBodyChunk::new())
+                    .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
+            ),
     );
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8888));
@@ -47,12 +57,15 @@ async fn log_request_and_response_body(
 
     let req = Request::from_parts(parts, body::boxed(Full::from(bytes)));
     let res = next.run(req).await;
+
     let (parts, body) = res.into_parts();
+
     let bytes = buffer_and_print("response", body).await?;
 
     let res = Response::from_parts(parts, Body::from(bytes));
     Ok(res)
 }
+
 async fn buffer_and_print<B>(direction: &str, body: B) -> Result<Bytes, Response>
 where
     B: axum::body::HttpBody<Data = Bytes>,
@@ -64,6 +77,7 @@ where
     tracing_body(direction, bytes.clone());
     Ok(bytes)
 }
+
 fn tracing_body(direction: &str, body: Bytes) {
     match serde_json::from_slice::<serde_json::Value>(&body) {
         Ok(body) => {
