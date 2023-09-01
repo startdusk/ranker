@@ -1,0 +1,83 @@
+{"level":"INFO","fields":{"message":"listening on 0.0.0.0:8888"},"target":"logging"}
+{"level":"INFO","fields":{"message":"request  body = Object {\"name\": String(\"name\"), \"poll_id\": String(\"8A5XU0\")}"},"target":"logging"}
+{"level":"INFO","fields":{"message":"response body = Object {\"code\": Number(1200), \"message\": String(\"return a json\"), \"status\": Number(200)}"},"target":"logging"}
+{"level":"INFO","fields":{"message":"request  body = Object {\"name\": String(\"name\"), \"poll_id\": String(\"8A5XU0\")}"},"target":"logging"}
+{"level":"INFO","fields":{"message":"response body = Object {\"code\": Number(1200), \"message\": String(\"return a json\"), \"status\": Number(200)}"},"target":"logging"}
+{"level":"INFO","fields":{"message":"request  body = Object {\"name\": String(\"name\"), \"poll_id\": String(\"8A5XU0\")}"},"target":"logging"}
+{"level":"INFO","fields":{"message":"response body = Object {\"code\": Number(1200), \"message\": String(\"return a json\"), \"status\": Number(200)}"},"target":"logging"}
+{"level":"INFO","fields":{"message":"listening on 0.0.0.0:8888"},"target":"logging"}
+{"level":"INFO","fields":{"message":"request  body = Object {\"name\": String(\"name\"), \"poll_id\": String(\"8A5XU0\")}"},"target":"logging"}
+{"level":"INFO","fields":{"message":"response body = Object {\"code\": Number(1200), \"message\": String(\"return a json\"), \"status\": Number(200)}"},"target":"logging"}
+{"level":"INFO","fields":{"message":"request  body = Object {\"name\": String(\"name\"), \"poll_id\": String(\"8A5XU0\")}"},"target":"logging"}
+{"level":"INFO","fields":{"message":"response body = Object {\"code\": Number(1200), \"message\": String(\"return a json\"), \"status\": Number(200)}"},"target":"logging"}
+{"level":"INFO","fields":{"message":"request  body = Object {\"name\": String(\"name\"), \"poll_id\": String(\"8A5XU0\")}"},"target":"logging"}
+{"level":"INFO","fields":{"message":"response body = Object {\"code\": Number(1200), \"message\": String(\"return a json\"), \"status\": Number(200)}"},"target":"logging"}
+[32m INFO[0m [2mlogging[0m[2m:[0m listening on 0.0.0.0:8888
+[32m INFO[0m [2mlogging[0m[2m:[0m request  body = Object {"name": String("name"), "poll_id": String("8A5XU0")}
+[32m INFO[0m [2mlogging[0m[2m:[0m response body = Object {"code": Number(1200), "message": String("return a json"), "status": Number(200)}
+[32m INFO[0m [2mlogging[0m[2m:[0m listening on 0.0.0.0:8888
+[32m INFO[0m [2mlogging[0m[2m:[0m request  body = Object {"name": String("name"), "poll_id": String("8A5XU0")}
+[32m INFO[0m [2mlogging[0m[2m:[0m response body = Object {"code": Number(1200), "message": String("return a json"), "status": Number(200)}
+[32m INFO[0m [2mlogging[0m[2m:[0m request  body = Object {"name": String("name"), "poll_id": String("8A5XU0")}
+[32m INFO[0m [2mlogging[0m[2m:[0m response body = Object {"code": Number(1200), "message": String("return a json"), "status": Number(200)}
+[32m INFO[0m [2mlogging[0m[2m:[0m request  body = Object {"name": String("name"), "poll_id": String("8A5XU0")}
+[32m INFO[0m [2mlogging[0m[2m:[0m response body = Object {"code": Number(1200), "message": String("return a json"), "status": Number(200)}
+{"level":"INFO","fields":{"message":"listening on 0.0.0.0:8888"},"target":"logging"}
+2023-08-26T10:36:21.325435Z  INFO logging: listening on 0.0.0.0:8888
+2023-08-26T10:36:27.465376Z TRACE hyper::proto::h1::conn: Conn::read_head
+2023-08-26T10:36:27.465461Z TRACE hyper::proto::h1::io: received 248 bytes
+2023-08-26T10:36:27.465593Z TRACE parse_headers: hyper::proto::h1::role: Request.parse bytes=248
+2023-08-26T10:36:27.465626Z TRACE parse_headers: hyper::proto::h1::role: Request.parse Complete(201)
+2023-08-26T10:36:27.465753Z DEBUG hyper::proto::h1::io: parsed 7 headers
+2023-08-26T10:36:27.465762Z DEBUG hyper::proto::h1::conn: incoming body is content-length (47 bytes)
+2023-08-26T10:36:27.465769Z TRACE hyper::proto::h1::conn: remote disabling keep-alive
+2023-08-26T10:36:27.465812Z TRACE hyper::proto::h1::decode: decode; state=Length(47)
+2023-08-26T10:36:27.465821Z DEBUG hyper::proto::h1::conn: incoming body completed
+2023-08-26T10:36:27.465899Z  INFO logging: request  body = Object {"name": String("name"), "poll_id": String("8A5XU0")}
+2023-08-26T10:36:27.465949Z  INFO logging: response body = Object {"code": Number(1200), "message": String("return a json"), "status": Number(200)}
+2023-08-26T10:36:27.465968Z TRACE encode_headers: hyper::proto::h1::role: Server::encode status=200, body=Some(Known(52)), req_method=Some(POST)
+2023-08-26T10:36:27.466045Z TRACE hyper::proto::h1::encode: sized write, len = 52
+2023-08-26T10:36:27.466052Z TRACE hyper::proto::h1::io: buffer.queue self.len=108 buf.len=52
+2023-08-26T10:36:27.466073Z DEBUG hyper::proto::h1::io: flushed 160 bytes
+2023-08-26T10:36:27.466079Z TRACE hyper::proto::h1::conn: State::close()
+2023-08-26T10:36:27.466084Z TRACE hyper::proto::h1::conn: flushed({role=server}): State { reading: Closed, writing: Closed, keep_alive: Disabled }
+2023-08-26T10:36:27.466097Z TRACE hyper::proto::h1::conn: shut down IO complete
+2023-08-26T10:36:28.419864Z TRACE hyper::proto::h1::conn: Conn::read_head
+2023-08-26T10:36:28.419936Z TRACE hyper::proto::h1::io: received 248 bytes
+2023-08-26T10:36:28.419991Z TRACE parse_headers: hyper::proto::h1::role: Request.parse bytes=248
+2023-08-26T10:36:28.420027Z TRACE parse_headers: hyper::proto::h1::role: Request.parse Complete(201)
+2023-08-26T10:36:28.420092Z DEBUG hyper::proto::h1::io: parsed 7 headers
+2023-08-26T10:36:28.420102Z DEBUG hyper::proto::h1::conn: incoming body is content-length (47 bytes)
+2023-08-26T10:36:28.420109Z TRACE hyper::proto::h1::conn: remote disabling keep-alive
+2023-08-26T10:36:28.420145Z TRACE hyper::proto::h1::decode: decode; state=Length(47)
+2023-08-26T10:36:28.420154Z DEBUG hyper::proto::h1::conn: incoming body completed
+2023-08-26T10:36:28.420199Z  INFO logging: request  body = Object {"name": String("name"), "poll_id": String("8A5XU0")}
+2023-08-26T10:36:28.420248Z  INFO logging: response body = Object {"code": Number(1200), "message": String("return a json"), "status": Number(200)}
+2023-08-26T10:36:28.420268Z TRACE encode_headers: hyper::proto::h1::role: Server::encode status=200, body=Some(Known(52)), req_method=Some(POST)
+2023-08-26T10:36:28.420290Z TRACE hyper::proto::h1::encode: sized write, len = 52
+2023-08-26T10:36:28.420297Z TRACE hyper::proto::h1::io: buffer.queue self.len=108 buf.len=52
+2023-08-26T10:36:28.420322Z DEBUG hyper::proto::h1::io: flushed 160 bytes
+2023-08-26T10:36:28.420329Z TRACE hyper::proto::h1::conn: State::close()
+2023-08-26T10:36:28.420334Z TRACE hyper::proto::h1::conn: flushed({role=server}): State { reading: Closed, writing: Closed, keep_alive: Disabled }
+2023-08-26T10:36:28.420347Z TRACE hyper::proto::h1::conn: shut down IO complete
+{"timestamp":"2023-08-26T10:38:35.988321Z","level":"INFO","fields":{"message":"listening on 0.0.0.0:8888"},"target":"logging"}
+{"timestamp":"2023-08-26T10:38:52.966883Z","level":"INFO","fields":{"message":"request  body = Object {\"name\": String(\"name\"), \"poll_id\": String(\"8A5XU0\")}"},"target":"logging"}
+{"timestamp":"2023-08-26T10:38:52.967019Z","level":"INFO","fields":{"message":"response body = Object {\"code\": Number(1200), \"message\": String(\"return a json\"), \"status\": Number(200)}"},"target":"logging"}
+{"timestamp":"2023-08-26T10:44:02.246156Z","level":"INFO","fields":{"message":"listening on 0.0.0.0:8888"},"target":"logging"}
+{"timestamp":"2023-08-26T10:44:04.282230Z","level":"INFO","fields":{"message":"request  body = Object {\n    \"name\": String(\"name\"),\n    \"poll_id\": String(\"8A5XU0\"),\n}"},"target":"logging"}
+{"timestamp":"2023-08-26T10:44:04.282421Z","level":"INFO","fields":{"message":"response body = Object {\n    \"code\": Number(1200),\n    \"message\": String(\"return a json\"),\n    \"status\": Number(200),\n}"},"target":"logging"}
+{"timestamp":"2023-08-26T10:44:31.885639Z","level":"INFO","fields":{"message":"listening on 0.0.0.0:8888"},"target":"logging"}
+{"timestamp":"2023-08-26T10:44:34.911448Z","level":"INFO","fields":{"message":"request  body = {\"name\":\"name\",\"poll_id\":\"8A5XU0\"}"},"target":"logging"}
+{"timestamp":"2023-08-26T10:44:34.911578Z","level":"INFO","fields":{"message":"response body = {\"code\":1200,\"message\":\"return a json\",\"status\":200}"},"target":"logging"}
+{"timestamp":"2023-08-26T10:56:17.295521Z","level":"INFO","message":"listening on 0.0.0.0:8888","target":"logging"}
+{"timestamp":"2023-08-26T10:56:26.702700Z","level":"INFO","message":"request  body = {\"name\":\"name\",\"poll_id\":\"8A5XU0\"}","target":"logging"}
+{"timestamp":"2023-08-26T10:56:26.702813Z","level":"INFO","message":"response body = {\"code\":1200,\"message\":\"return a json\",\"status\":200}","target":"logging"}
+{"timestamp":"2023-08-26T11:01:03.304501Z","level":"INFO","message":"listening on 0.0.0.0:8888","target":"logging"}
+{"timestamp":"2023-08-26T11:01:07.442543Z","level":"INFO","print_type":"request  body","body":"{\"name\":\"name\",\"poll_id\":\"8A5XU0\"}","target":"logging"}
+{"timestamp":"2023-08-26T11:01:07.442821Z","level":"INFO","print_type":"response body","body":"{\"code\":1200,\"message\":\"return a json\",\"status\":200}","target":"logging"}
+{"timestamp":"2023-08-26T14:02:25.908303Z","level":"INFO","message":"listening on 0.0.0.0:8888","target":"logging"}
+{"timestamp":"2023-08-26T14:02:27.615623Z","level":"INFO","request_id":"c5bd4395-0695-4875-a766-40682b8b1ec0","print_type":"request  body","body":"{\"name\":\"name\",\"poll_id\":\"8A5XU0\"}","target":"logging"}
+{"timestamp":"2023-08-26T14:02:27.615747Z","level":"INFO","request_id":"f779f725-0732-4901-8e23-7b1b71fead0f","print_type":"response body","body":"{\"code\":1200,\"message\":\"return a json\",\"status\":200}","target":"logging"}
+{"timestamp":"2023-08-26T14:04:26.900206Z","level":"INFO","message":"listening on 0.0.0.0:8888","target":"logging"}
+{"timestamp":"2023-08-26T14:04:28.833958Z","level":"INFO","request_id":"cad6082e-10ec-438a-a279-3ecb4ca84866","print_type":"request  body","body":"{\"name\":\"name\",\"poll_id\":\"8A5XU0\"}","target":"logging"}
+{"timestamp":"2023-08-26T14:04:28.834073Z","level":"INFO","request_id":"cad6082e-10ec-438a-a279-3ecb4ca84866","print_type":"response body","body":"{\"code\":1200,\"message\":\"return a json\",\"status\":200}","target":"logging"}

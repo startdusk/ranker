@@ -13,7 +13,7 @@ use std::{net::SocketAddr, sync::Arc};
 use tokio::{signal, sync::broadcast};
 use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
-use tracing::info_span;
+use tracing::{info, info_span};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
@@ -45,7 +45,7 @@ async fn main() -> anyhow::Result<()> {
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
                 // axum logs rejections from built-in extractors with the `axum::rejection`
                 // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
-                "ranker_logging=debug,tower_http=debug,axum::rejection=trace".into()
+                "ranker-server=info,tower_http=info,axum::rejection=trace".into()
             }),
         )
         .with(tracing_subscriber::fmt::layer())
@@ -109,7 +109,7 @@ async fn main() -> anyhow::Result<()> {
     // run it
     let addr = SocketAddr::from(([0, 0, 0, 0], config.server_http_port));
     let server = async {
-        println!("listening on {}", addr);
+        info!("listening on {}", addr);
         axum::Server::bind(&addr)
             .serve(app.into_make_service_with_connect_info::<SocketAddr>())
             .with_graceful_shutdown(shutdown_signal())
@@ -151,5 +151,5 @@ async fn shutdown_signal() {
         _ = terminate => {},
     }
 
-    println!("signal received, starting graceful shutdown");
+    info!("signal received, starting graceful shutdown");
 }

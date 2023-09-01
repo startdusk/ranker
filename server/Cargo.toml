@@ -39,6 +39,7 @@ validator = { version = "0.16.1", features = ["derive"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 tracing-appender = "0.2.2"
+uuid = { version = "1.4.1", features = ["v4"] }
 
 [profile.release]
 strip = true

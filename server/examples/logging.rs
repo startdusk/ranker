@@ -9,33 +9,52 @@ use axum::{
 use serde::Serialize;
 use std::net::SocketAddr;
 use tower::ServiceBuilder;
-use tower_http::{
-    trace::{self, TraceLayer},
-    ServiceBuilderExt,
-};
-use tracing::Level;
+use tower_http::ServiceBuilderExt;
 use tracing_appender::rolling;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use uuid::Uuid;
 
 #[tokio::main]
 async fn main() {
     let info_file = rolling::daily("./logs", "log");
-    tracing_subscriber::fmt()
-        .with_writer(info_file)
-        .with_target(false)
-        .json()
+    // tracing_subscriber::fmt()
+    //     .without_time() // For early local development.
+    //     .with_writer(info_file)
+    //     .with_env_filter(
+    //         tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+    //             // axum logs rejections from built-in extractors with the `axum::rejection`
+    //             // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
+    //             "logging=info,tower_http=info,axum::rejection=trace".into()
+    //         }),
+    //     )
+    //     .json()
+    //     .with_level(true)
+    //     .with_target(true)
+    //     .init();
+
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                // axum logs rejections from built-in extractors with the `axum::rejection`
+                // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
+                "logging=info,tower_http=info,axum::rejection=trace".into()
+            }),
+        )
+        .with(
+            tracing_subscriber::fmt::layer()
+                // .with_span_list(false)
+                // .with_current_span(true)
+                .with_writer(info_file)
+                .json()
+                .flatten_event(true)
+                .with_ansi(false),
+        )
         .init();
 
     let app = Router::new().route("/", post(handler)).layer(
         ServiceBuilder::new()
             .map_request_body(body::boxed)
-            .layer(middleware::from_fn(log_request_and_response_body))
-            .layer(
-                TraceLayer::new_for_http()
-                    .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
-                    .on_request(trace::DefaultOnRequest::new().level(Level::INFO))
-                    .on_body_chunk(trace::DefaultOnBodyChunk::new())
-                    .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
-            ),
+            .layer(middleware::from_fn(log_request_and_response_body)),
     );
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8888));
@@ -53,20 +72,21 @@ async fn log_request_and_response_body(
 ) -> Result<impl IntoResponse, Response> {
     let (parts, body) = req.into_parts();
 
-    let bytes = buffer_and_print("request ", body).await?;
+    let request_id = Uuid::new_v4();
+    let bytes = buffer_and_print(request_id, "request ", body).await?;
 
     let req = Request::from_parts(parts, body::boxed(Full::from(bytes)));
     let res = next.run(req).await;
 
     let (parts, body) = res.into_parts();
 
-    let bytes = buffer_and_print("response", body).await?;
+    let bytes = buffer_and_print(request_id, "response", body).await?;
 
     let res = Response::from_parts(parts, Body::from(bytes));
     Ok(res)
 }
 
-async fn buffer_and_print<B>(direction: &str, body: B) -> Result<Bytes, Response>
+async fn buffer_and_print<B>(request_id: Uuid, direction: &str, body: B) -> Result<Bytes, Response>
 where
     B: axum::body::HttpBody<Data = Bytes>,
     B::Error: std::fmt::Display,
@@ -74,17 +94,20 @@ where
     let bytes = hyper::body::to_bytes(body)
         .await
         .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()).into_response())?;
-    tracing_body(direction, bytes.clone());
+    tracing_body(request_id, direction, bytes.clone());
     Ok(bytes)
 }
 
-fn tracing_body(direction: &str, body: Bytes) {
+fn tracing_body(request_id: Uuid, direction: &str, body: Bytes) {
+    let print_type = format!("{direction} body");
     match serde_json::from_slice::<serde_json::Value>(&body) {
         Ok(body) => {
-            tracing::info!("{} body = {:?}", direction, body);
+            let body = body.to_string();
+            tracing::info!(request_id=%request_id, print_type=%print_type, body);
         }
         Err(_) => {
-            tracing::info!("{} body = {:?}", direction, body)
+            let body = format!("{:?}", body);
+            tracing::info!(request_id=%request_id, print_type=%print_type, body)
         }
     }
 }
