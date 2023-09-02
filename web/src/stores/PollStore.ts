@@ -20,22 +20,24 @@ type WsErrorUnique = WsError & {
 };
 
 type StateShape = {
-  poll?: Poll;
+  poll: Poll | null;
   accessToken?: string;
   socket?: Socket;
   wsErrors: WsErrorUnique[];
-  me?: Me;
+  me: Me | null;
   isLoading: boolean;
 };
 
 export const usePollStore = defineStore("PollStore", {
   state: (): StateShape => ({
+    poll: null,
+    me: null,
     isLoading: false,
     wsErrors: [],
   }),
 
   getters: {
-    getPoll: (state): Poll | undefined => {
+    getPoll: (state): Poll | null => {
       return state.poll;
     },
     isAdmin: (state): boolean => {
@@ -86,36 +88,44 @@ export const usePollStore = defineStore("PollStore", {
         name: accessToken.name,
       };
     },
-    initializePoll(poll?: Poll) {
+    initializePoll(poll: Poll) {
       this.poll = poll;
     },
     updatePoll(poll: Poll) {
       this.poll = poll;
     },
     deletePoll() {
-      this.poll = undefined;
+      this.poll = null;
     },
     reset() {
-      this.poll = undefined;
+      this.poll = null;
       this.accessToken = undefined;
       this.socket = undefined;
       this.wsErrors = [];
     },
 
-    startVote() {},
+    startVote() {
+      const poll = this.poll!;
+      poll.hasStarted = true;
+      this.poll = poll;
+    },
 
     removeParticipant(_id: string) {},
 
     removeNomination(_id: string) {},
 
     nominate(text: string) {
-      if (this.poll) {
-        const id = nanoid();
-        this.poll.nominations[id] = {
-          userId: this.me?.id!,
-          text,
-        };
-      }
+      const poll = this.poll!;
+      const id = nanoid();
+      poll.nominations[id] = {
+        userId: this.me?.id!,
+        text,
+      };
+      this.poll = poll;
     },
+
+    cancelPoll() {},
+
+    submitRankings(_rankings: string[]) {},
   },
 });

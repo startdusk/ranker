@@ -25,7 +25,6 @@ const pollStore = usePollStore();
 watchEffect(() => {
   if (!pollStore.poll) {
     router.push(AppPage.Welcome);
-    return;
   }
 });
 
@@ -42,7 +41,7 @@ const cancelLeavePoll = () => {
 };
 
 const confirmLeavePoll = () => {
-  pollStore.startVote();
+  router.push(AppPage.Welcome);
 };
 
 const submitRemoveParticipant = () => {
