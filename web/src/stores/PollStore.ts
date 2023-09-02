@@ -95,5 +95,9 @@ export const usePollStore = defineStore("PollStore", {
     startVote() {},
 
     removeParticipant(_id: string) {},
+
+    removeNomination(_id: string) {},
+
+    nominate(_text: string) {},
   },
 });

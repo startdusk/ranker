@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watchEffect } from "vue";
+import { useRouter } from "vue-router";
 import copy from "copy-to-clipboard";
 
 import { usePollStore } from "../stores/PollStore";
@@ -7,7 +8,8 @@ import { usePollStore } from "../stores/PollStore";
 import ColorizeText from "../components/ui/ColorizeText.vue";
 import ComfirmationDialog from "../components/ui/ConfirmationDialog.vue";
 import ParticipantList from "../components/ParticipantList.vue";
-import { useRouter } from "vue-router";
+import NominationForm from "../components/NominationForm.vue";
+
 import { AppPage } from "../router/page";
 
 const showConfirmation = ref(false);
@@ -134,12 +136,24 @@ const confirmRemoveParticipant = (id: string) => {
       </div>
     </div>
     <ParticipantList
-      :isOpen="isParticipantListOpen"
-      :onClose="closeParticipantList"
+      :is-open="isParticipantListOpen"
+      :on-close="closeParticipantList"
       :participants="pollStore.poll?.participants"
-      :isAdmin="pollStore.isAdmin || false"
-      :userId="pollStore.me?.id"
+      :is-admin="pollStore.isAdmin || false"
+      :user-id="pollStore.me?.id"
       :onRemoveParticipant="confirmRemoveParticipant"
+    />
+    <NominationForm
+      :title="pollStore.poll.topic"
+      :is-open="isNominationFormOpen"
+      :on-close="() => (isNominationFormOpen = false)"
+      :nominations="pollStore.poll.nominations"
+      :user-id="pollStore.me?.id"
+      :is-admin="pollStore.isAdmin || false"
+      :on-submit-nomination="(text) => pollStore.nominate(text)"
+      :on-remove-nomination="
+        (nominationId) => pollStore.removeNomination(nominationId)
+      "
     />
     <ComfirmationDialog
       :message="confirmationMessage"
