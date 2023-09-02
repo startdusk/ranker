@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { AppPage } from '../router/page';
-const pollId = ref('');
-const yourName = ref('');
-const apiError = ref('');
+import { ref } from "vue";
+import { AppPage } from "../router/page";
+import { usePollStore } from "../stores/PollStore";
+
+const pollStore = usePollStore();
+const pollId = ref("");
+const yourName = ref("");
+const apiError = ref("");
 
 const areFieldsInvalid = (): boolean => {
   const pollIdValue = pollId.value.trim();
@@ -19,7 +22,9 @@ const areFieldsInvalid = (): boolean => {
 };
 
 const handleJoinPollClick = () => {
-  console.log('handleJoinPollClick');
+  pollStore.startLoading();
+  console.log("handleJoinPollClick");
+  pollStore.stopLoading();
 };
 </script>
 <template>

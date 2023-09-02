@@ -1,20 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref } from "vue";
+import { useRouter } from "vue-router";
 
-import { usePollStore } from '../stores/PollStore';
+import { usePollStore } from "../stores/PollStore";
 
-import CountSelector from '../components/ui/CountSelector.vue';
-import { AppPage } from '../router/page';
-import { Poll } from '../poll-types';
+import CountSelector from "../components/ui/CountSelector.vue";
+import { AppPage } from "../router/page";
+import { Poll } from "../poll-types";
+import { sleep } from "../utils";
 
 const pollStore = usePollStore();
 const router = useRouter();
 
-const pollTopic = ref('');
+const pollTopic = ref("");
 const maxVotes = ref(3);
-const enterName = ref('');
-const apiError = ref('');
+const enterName = ref("");
+const apiError = ref("");
 
 const onChange = (val: number) => {
   maxVotes.value = val;
@@ -35,19 +36,24 @@ const areFieldsInvalid = (): boolean => {
 };
 
 const handleCreatePoll = async () => {
+  pollStore.startLoading();
   const poll: Poll = {
-    id: '123456',
+    id: "123456",
     topic: pollTopic.value,
     votesPerVoter: 0,
-    participants: {},
-    adminId: 'my-id',
+    participants: {
+      "my-id": "this is my participanis",
+    },
+    adminId: "my-id",
     nominations: {},
     rankings: {},
     results: [],
     hasStarted: false,
   };
   pollStore.initializePoll(poll);
+  await sleep(3000);
   router.push(AppPage.WaitingRoom);
+  pollStore.stopLoading();
 };
 </script>
 <template>

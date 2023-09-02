@@ -23,10 +23,12 @@ type StateShape = {
   socket?: Socket;
   wsErrors: WsErrorUnique[];
   me?: Me;
+  isLoading: boolean;
 };
 
 export const usePollStore = defineStore("PollStore", {
   state: (): StateShape => ({
+    isLoading: false,
     wsErrors: [],
   }),
 
@@ -65,6 +67,12 @@ export const usePollStore = defineStore("PollStore", {
   },
 
   actions: {
+    startLoading() {
+      this.isLoading = true;
+    },
+    stopLoading() {
+      this.isLoading = false;
+    },
     setPollAccessToken(token?: string) {
       this.accessToken = token;
     },
@@ -85,5 +93,7 @@ export const usePollStore = defineStore("PollStore", {
     },
 
     startVote() {},
+
+    removeParticipant(_id: string) {},
   },
 });
