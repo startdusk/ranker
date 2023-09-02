@@ -22,8 +22,6 @@ const isParticipantListOpen = ref(false);
 const router = useRouter();
 const pollStore = usePollStore();
 
-console.log("pollStore.isAdmin", pollStore.isAdmin);
-
 watchEffect(() => {
   if (!pollStore.poll) {
     router.push(AppPage.Welcome);
@@ -50,11 +48,7 @@ const confirmLeavePoll = () => {
 const submitRemoveParticipant = () => {
   participantToRemove.value &&
     pollStore.removeParticipant(participantToRemove.value);
-  isConfirmationOpen.value = true;
-};
-
-const setIsConfirmationOpen = () => {
-  isConfirmationOpen.value = true;
+  isConfirmationOpen.value = false;
 };
 
 const closeParticipantList = () => {
@@ -62,7 +56,7 @@ const closeParticipantList = () => {
 };
 
 const confirmRemoveParticipant = (id: string) => {
-  confirmationMessage.value = `Remove ${pollStore.poll?.participants[id]} from poll?`;
+  confirmationMessage.value = `Remove "${pollStore.poll?.participants[id]}" from poll?`;
   participantToRemove.value = id;
   isConfirmationOpen.value = true;
 };
@@ -160,8 +154,8 @@ const confirmRemoveParticipant = (id: string) => {
     <ComfirmationDialog
       :message="confirmationMessage"
       :show-dialog="isConfirmationOpen"
-      :on-cancel="submitRemoveParticipant"
-      :on-confirm="setIsConfirmationOpen"
+      :on-cancel="() => (isConfirmationOpen = false)"
+      :on-confirm="submitRemoveParticipant"
     />
   </div>
 </template>

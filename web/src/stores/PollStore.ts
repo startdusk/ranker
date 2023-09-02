@@ -3,6 +3,7 @@ import { defineStore } from "pinia";
 import type { Poll } from "../poll-types";
 import { Socket } from "socket.io";
 import { getTokenPayload } from "../utils";
+import { nanoid } from "nanoid";
 
 type Me = {
   id: string;
@@ -107,6 +108,14 @@ export const usePollStore = defineStore("PollStore", {
 
     removeNomination(_id: string) {},
 
-    nominate(_text: string) {},
+    nominate(text: string) {
+      if (this.poll) {
+        const id = nanoid();
+        this.poll.nominations[id] = {
+          userId: this.me?.id!,
+          text,
+        };
+      }
+    },
   },
 });
