@@ -57,21 +57,22 @@ where
         state: &S,
     ) -> std::result::Result<Self, Self::Rejection> {
         let already_authed = parts.extensions.get::<Authed>();
-        if let Some(authed) = already_authed {
-            return Ok(authed.clone());
-        } else {
+        let Some(authed) = already_authed else {
             let already_tokened = parts.extensions.get::<Tokened>();
             let token_o = if let Some(token) = already_tokened {
                 Some(token.token.clone())
             } else {
                 extract_token(parts, state).await
             };
+
             let Some(token) = token_o else {
 				return Err(Error::MissingCredentials)
 			};
 
-            verify(token)
-        }
+            return verify(token)
+        };
+
+        Ok(authed.clone())
     }
 }
 
@@ -92,18 +93,17 @@ where
         state: &S,
     ) -> std::result::Result<Self, Self::Rejection> {
         let already_tokened = parts.extensions.get::<Tokened>();
-        if let Some(tokened) = already_tokened {
-            Ok(tokened.clone())
-        } else {
+        let Some(tokened) = already_tokened else {
             let token_o = extract_token(parts, state).await;
-            if let Some(token) = token_o {
-                let tokened = Self { token };
-                parts.extensions.insert(tokened.clone());
-                Ok(tokened)
-            } else {
-                Err(Error::WrongCredentials)
-            }
-        }
+            let Some(token) = token_o else {
+                return Err(Error::WrongCredentials)
+            };
+            let tokened = Self { token };
+            parts.extensions.insert(tokened.clone());
+            return Ok(tokened)
+        };
+
+        Ok(tokened.clone())
     }
 }
 

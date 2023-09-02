@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 
 import type { Poll } from "../poll-types";
 import { Socket } from "socket.io";
+import { getTokenPayload } from "../utils";
 
 type Me = {
   id: string;
@@ -74,7 +75,15 @@ export const usePollStore = defineStore("PollStore", {
       this.isLoading = false;
     },
     setPollAccessToken(token?: string) {
+      if (!token) {
+        return;
+      }
       this.accessToken = token;
+      const accessToken = getTokenPayload(token);
+      this.me = {
+        id: accessToken.sub,
+        name: accessToken.name,
+      };
     },
     initializePoll(poll?: Poll) {
       this.poll = poll;

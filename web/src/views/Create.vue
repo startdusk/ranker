@@ -38,16 +38,29 @@ const areFieldsInvalid = (): boolean => {
 const handleCreatePoll = async () => {
   pollStore.startLoading();
   const poll: Poll = {
-    id: "123456",
+    id: "5VMI2V",
     topic: pollTopic.value,
     votesPerVoter: 0,
     participants: {
-      "my-id": "this is my participanis",
+      W4yUKVfIu00ibMwlpiEHM: "this is my participanis",
       "user-id1": "user 1 post a participants",
       "user-id2": "user 2 post a participants",
     },
-    adminId: "my-id",
-    nominations: {},
+    adminId: "W4yUKVfIu00ibMwlpiEHM",
+    nominations: {
+      nomination_id1: {
+        userId: "W4yUKVfIu00ibMwlpiEHM",
+        text: "hello world",
+      },
+      nomination_id2: {
+        userId: "user-id1",
+        text: "nooooooooooooooooooooooo",
+      },
+      nomination_id3: {
+        userId: "user-id2",
+        text: "booooooooooooooooooooooo",
+      },
+    },
     rankings: {},
     results: [],
     hasStarted: false,

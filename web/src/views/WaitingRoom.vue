@@ -22,6 +22,8 @@ const isParticipantListOpen = ref(false);
 const router = useRouter();
 const pollStore = usePollStore();
 
+console.log("pollStore.isAdmin", pollStore.isAdmin);
+
 watchEffect(() => {
   if (!pollStore.poll) {
     router.push(AppPage.Welcome);
@@ -129,9 +131,9 @@ const confirmRemoveParticipant = (id: string) => {
         </button>
         <ComfirmationDialog
           message="You'll be kicked out of the poll"
-          :showDialog="showConfirmation"
-          :onCancel="cancelLeavePoll"
-          :onConfirm="confirmLeavePoll"
+          :show-dialog="showConfirmation"
+          :on-cancel="cancelLeavePoll"
+          :on-confirm="confirmLeavePoll"
         />
       </div>
     </div>
@@ -141,7 +143,7 @@ const confirmRemoveParticipant = (id: string) => {
       :participants="pollStore.poll?.participants"
       :is-admin="pollStore.isAdmin || false"
       :user-id="pollStore.me?.id"
-      :onRemoveParticipant="confirmRemoveParticipant"
+      :on-remove-participant="confirmRemoveParticipant"
     />
     <NominationForm
       :title="pollStore.poll.topic"
@@ -157,9 +159,9 @@ const confirmRemoveParticipant = (id: string) => {
     />
     <ComfirmationDialog
       :message="confirmationMessage"
-      :showDialog="isConfirmationOpen"
-      :onCancel="submitRemoveParticipant"
-      :onConfirm="setIsConfirmationOpen"
+      :show-dialog="isConfirmationOpen"
+      :on-cancel="submitRemoveParticipant"
+      :on-confirm="setIsConfirmationOpen"
     />
   </div>
 </template>
