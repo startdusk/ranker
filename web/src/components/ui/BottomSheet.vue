@@ -7,7 +7,7 @@ type PropsType = {
 const { isOpen = false, onClose } = defineProps<PropsType>();
 </script>
 <template>
-  <Transition name="slide-fade" :duration="3000">
+  <transition name="slide-fade" :duration="300">
     <div
       v-if="isOpen"
       class="absolute left-0 right-0 max-w-screen-sm bg-gray-50 bottom-0 z-10 overflow-y-hidden top-16 flex flex-col"
@@ -25,7 +25,7 @@ const { isOpen = false, onClose } = defineProps<PropsType>();
         </div>
       </div>
     </div>
-  </Transition>
+  </transition>
 </template>
 <style scoped>
 .slide-fade-enter-active {

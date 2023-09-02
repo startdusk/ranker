@@ -43,6 +43,8 @@ const handleCreatePoll = async () => {
     votesPerVoter: 0,
     participants: {
       "my-id": "this is my participanis",
+      "user-id1": "user 1 post a participants",
+      "user-id2": "user 2 post a participants",
     },
     adminId: "my-id",
     nominations: {},

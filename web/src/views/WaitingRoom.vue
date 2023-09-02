@@ -8,6 +8,7 @@ import ColorizeText from "../components/ui/ColorizeText.vue";
 import ComfirmationDialog from "../components/ui/ConfirmationDialog.vue";
 import ParticipantList from "../components/ParticipantList.vue";
 import { useRouter } from "vue-router";
+import { AppPage } from "../router/page";
 
 const showConfirmation = ref(false);
 const isConfirmationOpen = ref(false);
@@ -21,7 +22,7 @@ const pollStore = usePollStore();
 
 watchEffect(() => {
   if (!pollStore.poll) {
-    router.back();
+    router.push(AppPage.Welcome);
     return;
   }
 });
@@ -63,7 +64,7 @@ const confirmRemoveParticipant = (id: string) => {
 };
 </script>
 <template>
-  <template v-if="pollStore.poll">
+  <div v-if="pollStore.poll">
     <div class="flex flex-col w-full justify-between items-center h-full">
       <div>
         <h2 class="text-center">Poll Topic</h2>
@@ -146,5 +147,5 @@ const confirmRemoveParticipant = (id: string) => {
       :onCancel="submitRemoveParticipant"
       :onConfirm="setIsConfirmationOpen"
     />
-  </template>
+  </div>
 </template>
