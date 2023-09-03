@@ -154,7 +154,10 @@ const usePollStore = defineStore("PollStore", {
       this.wsErrors = this.wsErrors.filter((error) => error.id !== id);
     },
 
-    startOver() {},
+    startOver() {
+      this.reset();
+      localStorage.removeItem(accessTokenKey);
+    },
   },
 });
 

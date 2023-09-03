@@ -4,10 +4,19 @@ import { ref } from "vue";
 import ConfirmationDialog from "../components/ui/ConfirmationDialog.vue";
 import ResultCard from "../components/ui/ResultCard.vue";
 import { usePollStore } from "../stores/PollStore";
+import { useRouter } from "vue-router";
+import { AppPage } from "../router/page";
 
+const router = useRouter();
 const pollStore = usePollStore();
+
 const isConfirmationOpen = ref(false);
 const isLeavePollOpen = ref(false);
+
+const handleLeavePoll = () => {
+  pollStore.startOver();
+  router.push(AppPage.Welcome);
+};
 </script>
 <template>
   <div>
@@ -78,11 +87,7 @@ const isLeavePollOpen = ref(false);
           isLeavePollOpen = false;
         }
       "
-      :on-confirm="
-        () => {
-          pollStore.startOver();
-        }
-      "
+      :on-confirm="handleLeavePoll"
     />
   </div>
 </template>
