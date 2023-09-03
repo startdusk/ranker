@@ -26,7 +26,6 @@ const toggleNomination = (id: string) => {
 
 const getRank = (id: string) => {
   const position = rankings.value.findIndex((ranking) => ranking === id);
-
   return position < 0 ? undefined : position + 1;
 };
 

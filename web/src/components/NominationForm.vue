@@ -40,7 +40,7 @@ const getBoxStyle = (id: string): string => {
 };
 </script>
 <template>
-  <BottomSheet :isOpen="isOpen" :onClose="onClose">
+  <BottomSheet :is-open="isOpen" :on-close="onClose">
     <div class="flex flex-col px-4 items-center mb-2">
       <h3 class="font-semibold">{{ title }}</h3>
       <div class="w-full my-4">

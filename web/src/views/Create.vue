@@ -40,7 +40,7 @@ const handleCreatePoll = async () => {
   const poll: Poll = {
     id: "5VMI2V",
     topic: pollTopic.value,
-    votesPerVoter: 0,
+    votesPerVoter: maxVotes.value,
     participants: {
       W4yUKVfIu00ibMwlpiEHM: "this is my participanis",
       "user-id1": "user 1 post a participants",

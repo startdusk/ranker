@@ -1,9 +1,10 @@
 import { defineStore } from "pinia";
 
-import type { Poll } from "../poll-types";
+import type { Poll, Results } from "../poll-types";
 import { Socket } from "socket.io";
 import { getTokenPayload } from "../utils";
 import { nanoid } from "nanoid";
+import { accessTokenKey } from "../constants";
 
 type Me = {
   id: string;
@@ -19,21 +20,24 @@ type WsErrorUnique = WsError & {
   id: string;
 };
 
+// Don't using undefined, Vue cannot watch it
 type StateShape = {
   poll: Poll | null;
-  accessToken?: string;
-  socket?: Socket;
+  accessToken: string | null;
+  socket: Socket | null;
   wsErrors: WsErrorUnique[];
   me: Me | null;
   isLoading: boolean;
 };
 
-export const usePollStore = defineStore("PollStore", {
+const usePollStore = defineStore("PollStore", {
   state: (): StateShape => ({
     poll: null,
     me: null,
     isLoading: false,
     wsErrors: [],
+    accessToken: null,
+    socket: null,
   }),
 
   getters: {
@@ -82,6 +86,7 @@ export const usePollStore = defineStore("PollStore", {
         return;
       }
       this.accessToken = token;
+      localStorage.setItem(accessTokenKey, token);
       const accessToken = getTokenPayload(token);
       this.me = {
         id: accessToken.sub,
@@ -99,8 +104,8 @@ export const usePollStore = defineStore("PollStore", {
     },
     reset() {
       this.poll = null;
-      this.accessToken = undefined;
-      this.socket = undefined;
+      this.accessToken = null;
+      this.socket = null;
       this.wsErrors = [];
     },
 
@@ -125,7 +130,32 @@ export const usePollStore = defineStore("PollStore", {
     },
 
     cancelPoll() {},
+    closePoll() {},
 
-    submitRankings(_rankings: string[]) {},
+    submitRankings(rankings: string[]) {
+      // TODO: mock
+      const poll = this.poll!;
+      // poll.rankings = rankings;
+      const userId = this.me?.id!;
+      poll.rankings[userId] = rankings;
+      const results: Results = [];
+      Object.entries(poll.nominations).map(([nominationId, nomination]) => {
+        results.push({
+          nominationId,
+          nominationText: nomination.text,
+          score: 1.72,
+        });
+      });
+      poll.results = results;
+      this.poll = poll;
+    },
+
+    removeWsError(id: string) {
+      this.wsErrors = this.wsErrors.filter((error) => error.id !== id);
+    },
+
+    startOver() {},
   },
 });
+
+export { usePollStore };

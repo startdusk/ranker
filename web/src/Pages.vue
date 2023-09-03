@@ -3,13 +3,30 @@ import { useRouter } from "vue-router";
 
 import { usePollStore } from "./stores/PollStore";
 import { AppPage } from "./router/page";
+import { watchEffect } from "vue";
 
 const pollStore = usePollStore();
 const router = useRouter();
 
-pollStore.$subscribe((_mutate, _state) => {
-  console.log(pollStore.me);
-  console.log(pollStore.poll);
+// 1.using pinia subscribe
+// pollStore.$subscribe((_mutate, _state) => {
+//   console.log(pollStore.me);
+//   console.log(pollStore.poll);
+//   if (pollStore.me?.id && pollStore.poll && !pollStore.poll.hasStarted) {
+//     router.push(AppPage.WaitingRoom);
+//   }
+
+//   if (pollStore.me?.id && pollStore.poll?.hasStarted) {
+//     router.push(AppPage.Voting);
+//   }
+
+//   if (pollStore.me?.id && pollStore.hasVoted) {
+//     router.push(AppPage.Results);
+//   }
+// });
+
+// 2.using vue watchEffect
+watchEffect(() => {
   if (pollStore.me?.id && pollStore.poll && !pollStore.poll.hasStarted) {
     router.push(AppPage.WaitingRoom);
   }
