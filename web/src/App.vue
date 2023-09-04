@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { watchEffect } from "vue";
+import { useEventSource } from "@vueuse/core";
+
 import Loader from "./components/ui/Loader.vue";
+import SnackBar from "./components/ui/SnackBar.vue";
 import Pages from "./Pages.vue";
 
 import { usePollStore } from "./stores/PollStore";
 import { getTokenPayload, sleep } from "./utils";
 
+const { data } = useEventSource("http://localhost:3000/sse");
 const state = usePollStore();
+
 watchEffect(async () => {
   console.log("App useEffect - check token and send to proper page");
 
@@ -45,6 +50,18 @@ watchEffect(async () => {
 
 <template>
   <Loader :isLoading="state.isLoading" color="orange" :width="120" />
+  <!-- will get {"notify_type":"join_poll","username":"username1","poll_id":"JZ2RCC"} -->
+  <div v-if="data">{{ data }}</div>
+  <SnackBar
+    v-for="error in state.wsErrors"
+    :key="error.id"
+    type="error"
+    :title="error.type"
+    :message="error.message"
+    :show="true"
+    :autoCloseDuration="5000"
+    @on-close="() => state.removeWsError(error.id)"
+  />
   <Pages />
 </template>
 

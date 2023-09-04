@@ -35,7 +35,13 @@ const usePollStore = defineStore("PollStore", {
     poll: null,
     me: null,
     isLoading: false,
-    wsErrors: [],
+    wsErrors: [
+      {
+        id: "1",
+        type: "unknown",
+        message: "this is an error",
+      },
+    ],
     accessToken: null,
     socket: null,
   }),

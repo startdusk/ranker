@@ -3,7 +3,7 @@ use std::sync::Arc;
 use serde::Deserialize;
 use tokio::sync::broadcast;
 
-use crate::models::room::Rooms;
+use crate::models::{room::Rooms, Notification};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct EnvConfig {
@@ -22,4 +22,6 @@ pub struct AppState {
     pub rooms: Arc<Rooms>,
 
     pub notify_tx: broadcast::Sender<String>,
+
+    pub sse_tx: broadcast::Sender<Notification>,
 }

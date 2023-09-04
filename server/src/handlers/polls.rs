@@ -8,7 +8,7 @@ use crate::{
     data::redis::polls,
     errors::Error,
     handlers::UnifyResponse,
-    models::{AddPollReq, AddPollResp, JoinPollReq, JoinPollResp, Poll},
+    models::{AddPollReq, AddPollResp, JoinPollReq, JoinPollResp, Notification, NotifyType, Poll},
     shared::ids::{create_poll_id, create_user_id},
     state::AppState,
     validate::Input,
@@ -31,8 +31,15 @@ pub async fn add(
         user_id.clone(),
     )
     .await?;
-    let access_token = auth::token_gen(poll_id, user_id, input.name, ttl)?;
+    let access_token = auth::token_gen(poll_id.clone(), user_id.clone(), input.name.clone(), ttl)?;
     let add_poll_resp = AddPollResp { poll, access_token };
+
+    let _ = state.sse_tx.send(Notification {
+        notify_type: NotifyType::JoinPoll,
+        poll_id,
+        username: input.name,
+    });
+
     Ok(UnifyResponse::ok(Some(add_poll_resp)).json())
 }
 

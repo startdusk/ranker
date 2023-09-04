@@ -6,7 +6,7 @@ use server::{
     data::redis::{polls::POLL_KEY_PREFIX, redis_keyspace_notifications},
     handlers::not_found,
     models::room::Rooms,
-    services::{polls, ws},
+    services::{polls, sse, ws},
     state::{AppState, EnvConfig},
 };
 use std::{net::SocketAddr, sync::Arc};
@@ -28,11 +28,13 @@ async fn main() -> anyhow::Result<()> {
     let middleware_stack = ServiceBuilder::new().layer(Extension(redis_mgr));
 
     let (notify_tx, _rx) = broadcast::channel(100);
+    let (sse_tx, _rx) = broadcast::channel(100);
     let rooms = Arc::new(Rooms::default());
     let app_state = Arc::new(AppState {
         env: config.clone(),
         rooms: rooms.clone(),
         notify_tx: notify_tx.clone(),
+        sse_tx: sse_tx.clone(),
     });
 
     let client_allow_origin = format!("{}:{}", config.client_domain, config.client_port);
@@ -57,7 +59,8 @@ async fn main() -> anyhow::Result<()> {
             "/api",
             Router::new().nest("/polls", polls::service(app_state.clone())),
         )
-        .nest("/polls", ws::service(app_state))
+        .nest("/polls", ws::service(app_state.clone()))
+        .nest("/sse", sse::service(app_state))
         .fallback(not_found::handler_404)
         .layer(middleware_stack)
         .layer(cors_layer)

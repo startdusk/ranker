@@ -9,6 +9,7 @@ use serde::Serialize;
 
 pub mod not_found;
 pub mod polls;
+pub mod sse;
 pub mod ws;
 
 impl IntoResponse for Error {
