@@ -5,6 +5,7 @@ pub struct Notification {
     pub notify_type: NotifyType,
     pub username: String,
     pub poll_id: String,
+    pub topic: String,
 }
 
 #[derive(Debug, Serialize, Clone)]

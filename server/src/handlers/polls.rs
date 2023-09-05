@@ -26,7 +26,7 @@ pub async fn add(
         &mut con,
         ttl,
         poll_id.clone(),
-        input.topic,
+        input.topic.clone(),
         input.votes_per_voter,
         user_id.clone(),
     )
@@ -38,6 +38,7 @@ pub async fn add(
         notify_type: NotifyType::JoinPoll,
         poll_id,
         username: input.name,
+        topic: input.topic,
     });
 
     Ok(UnifyResponse::ok(Some(add_poll_resp)).json())

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { watchEffect } from "vue";
+import { ref, watchEffect } from "vue";
 import { useEventSource } from "@vueuse/core";
+import { NoticeBar } from "vant";
 
 import Loader from "./components/ui/Loader.vue";
 import SnackBar from "./components/ui/SnackBar.vue";
@@ -8,9 +9,16 @@ import Pages from "./Pages.vue";
 
 import { usePollStore } from "./stores/PollStore";
 import { getTokenPayload, sleep } from "./utils";
+import { NotificationMessage } from "./poll-types";
 
 const { data } = useEventSource("http://localhost:3000/sse");
 const state = usePollStore();
+const notifyMessage = ref<NotificationMessage | null>(null);
+watchEffect(() => {
+  if (data.value) {
+    notifyMessage.value = JSON.parse(data.value) as NotificationMessage;
+  }
+});
 
 watchEffect(async () => {
   console.log("App useEffect - check token and send to proper page");
@@ -51,7 +59,7 @@ watchEffect(async () => {
 <template>
   <Loader :isLoading="state.isLoading" color="orange" :width="120" />
   <!-- will get {"notify_type":"join_poll","username":"username1","poll_id":"JZ2RCC"} -->
-  <div v-if="data">{{ data }}</div>
+  <NoticeBar left-icon="volume-o" :text="notifyMessage?.topic" />
   <SnackBar
     v-for="error in state.wsErrors"
     :key="error.id"
