@@ -10,7 +10,10 @@ import Pages from "./Pages.vue";
 import { usePollStore } from "./stores/PollStore";
 import { getTokenPayload, sleep } from "./utils";
 import { NotificationMessage } from "./poll-types";
+import { useRouter } from "vue-router";
+import { AppPage } from "./router/page";
 
+const router = useRouter();
 const { data } = useEventSource("http://localhost:3000/sse");
 const state = usePollStore();
 const notifyMessage = ref<NotificationMessage | null>(null);
@@ -54,12 +57,30 @@ watchEffect(async () => {
   // state.initializeSocket();
   state.stopLoading();
 });
+
+const hanldeJoinPoll = (pollId: string) => {
+  router.push({
+    name: AppPage.Join,
+    query: {
+      pollId,
+    },
+  });
+};
 </script>
 
 <template>
   <Loader :isLoading="state.isLoading" color="orange" :width="120" />
-  <!-- will get {"notify_type":"join_poll","username":"username1","poll_id":"JZ2RCC"} -->
-  <NoticeBar left-icon="volume-o" :text="notifyMessage?.topic" />
+  <NoticeBar
+    v-if="notifyMessage"
+    left-icon="volume-o"
+    @click="hanldeJoinPoll(notifyMessage.poll_id)"
+  >
+    user {{ notifyMessage?.username }} create a vote
+    <span class="font-mono text-blue-500">
+      {{ notifyMessage?.topic }}
+    </span>
+    , click for join the vote
+  </NoticeBar>
   <SnackBar
     v-for="error in state.wsErrors"
     :key="error.id"

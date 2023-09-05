@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { AppPage } from "../router/page";
 import { usePollStore } from "../stores/PollStore";
+import { useRoute } from "vue-router";
 
 const pollStore = usePollStore();
 const pollId = ref("");
 const yourName = ref("");
 const apiError = ref("");
+
+onMounted(() => {
+  const route = useRoute();
+  if (route.query.pollId) {
+    pollId.value = route.query.pollId as string;
+  }
+});
 
 const areFieldsInvalid = (): boolean => {
   const pollIdValue = pollId.value.trim();
