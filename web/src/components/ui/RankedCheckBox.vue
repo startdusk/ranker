@@ -2,13 +2,20 @@
 type PropsType = {
   rank?: number;
   value: string;
-  onSelect: () => void;
 };
 
-const { rank, value, onSelect } = defineProps<PropsType>();
+const { rank, value } = defineProps<PropsType>();
+
+const emits = defineEmits<{
+  (e: 'on-select'): void;
+}>();
+
+const handleSelect = () => {
+  emits('on-select');
+};
 </script>
 <template>
-  <div class="my-4 box btn-orange relative" @click="() => onSelect()">
+  <div class="my-4 box btn-orange relative" @click="handleSelect">
     <div>{{ value }}</div>
     <div
       v-if="rank"

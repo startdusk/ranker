@@ -16,6 +16,11 @@ export type Nullable<T> = {
   [P in keyof T]: T[P] | null;
 };
 
+/**
+ * is string
+ * @param test value
+ * @returns boolean
+ */
 export function isString(test: any): test is string {
   return typeof test === "string";
 }

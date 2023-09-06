@@ -3,10 +3,10 @@ type PropsType = {
   text: string;
 };
 
-const props = defineProps<PropsType>();
+const { text } = defineProps<PropsType>();
 </script>
 <template>
-  <template v-for="(val, index) in props.text.split('')">
+  <template v-for="(val, index) in text.split('')">
     <!-- vue v-if/v-else must be use unique key -->
     <span
       v-if="val.charCodeAt(0) >= 48 && val.charCodeAt(0) <= 57"

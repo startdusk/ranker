@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import ConfirmationDialog from "../components/ui/ConfirmationDialog.vue";
-import RankedCheckBox from "../components/ui/RankedCheckBox.vue";
-import { usePollStore } from "../stores/PollStore";
+import { ref } from 'vue';
+import ConfirmationDialog from '../components/ui/ConfirmationDialog.vue';
+import RankedCheckBox from '../components/ui/RankedCheckBox.vue';
+import { usePollStore } from '../stores/PollStore';
 
 const pollStore = usePollStore();
 const rankings = ref<string[]>([]);
@@ -57,7 +57,7 @@ const handleSubmitRanking = () => {
           :key="nominationId"
           :value="nomination.text"
           :rank="getRank(nominationId)"
-          :on-select="
+          @on-select="
             () => {
               toggleNomination(nominationId);
             }
@@ -76,12 +76,12 @@ const handleSubmitRanking = () => {
       <ConfirmationDialog
         message="You cannot change your vote after submitting"
         :show-dialog="confirmVotes"
-        :on-cancel="
+        @on-cancel="
           () => {
             confirmVotes = false;
           }
         "
-        :on-confirm="handleSubmitRanking"
+        @on-confirm="handleSubmitRanking"
       />
       <template v-if="pollStore.isAdmin">
         <button class="box btn-orange my-2 w-36" @click="confirmCancel = true">
@@ -90,12 +90,12 @@ const handleSubmitRanking = () => {
         <ConfirmationDialog
           message="This will cancel the poll and remove all users"
           :show-dialog="confirmCancel"
-          :on-cancel="
+          @on-cancel="
             () => {
               confirmCancel = false;
             }
           "
-          :on-confirm="() => pollStore.cancelPoll()"
+          @on-confirm="() => pollStore.cancelPoll()"
         />
       </template>
     </div>

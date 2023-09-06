@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
-import { AppPage } from "../router/page";
-import { usePollStore } from "../stores/PollStore";
-import { useRoute } from "vue-router";
+import { computed, onMounted, ref } from 'vue';
+import { AppPage } from '../router/page';
+import { usePollStore } from '../stores/PollStore';
+import { useRoute, useRouter } from 'vue-router';
 
 const pollStore = usePollStore();
-const pollId = ref("");
-const yourName = ref("");
-const apiError = ref("");
+const pollId = ref('');
+const yourName = ref('');
+const apiError = ref('');
 
 onMounted(() => {
   const route = useRoute();
@@ -16,7 +16,7 @@ onMounted(() => {
   }
 });
 
-const areFieldsInvalid = (): boolean => {
+const areFieldsInvalid = computed((): boolean => {
   const pollIdValue = pollId.value.trim();
   if (pollIdValue.length < 6 || pollIdValue.length > 6) {
     return true;
@@ -27,11 +27,12 @@ const areFieldsInvalid = (): boolean => {
   }
 
   return false;
-};
+});
 
+const router = useRouter();
 const handleJoinPollClick = () => {
   pollStore.startLoading();
-  console.log("handleJoinPollClick");
+  router.push(AppPage.WaitingRoom);
   pollStore.stopLoading();
 };
 </script>
@@ -65,7 +66,7 @@ const handleJoinPollClick = () => {
     </div>
     <div class="my-12 flex flex-col justify-center items-center">
       <button
-        :disabled="areFieldsInvalid()"
+        :disabled="areFieldsInvalid"
         @click="handleJoinPollClick"
         class="box btn-orange w-32 my-2"
       >

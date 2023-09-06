@@ -1,27 +1,31 @@
 <script setup lang="ts">
-import BottomSheet from "./ui/BottomSheet.vue";
-import { Participants } from "../poll-types";
+import BottomSheet from './ui/BottomSheet.vue';
+import { Participants } from '../poll-types';
 
 type PropsType = {
   participants?: Participants;
   userId?: string;
   isAdmin: boolean;
-  onRemoveParticipant: (id: string) => void;
   isOpen: boolean;
-  onClose: () => void;
 };
 
-const {
-  isOpen,
-  onClose,
-  participants = {},
-  onRemoveParticipant,
-  userId,
-  isAdmin,
-} = defineProps<PropsType>();
+const { isOpen, participants = {}, userId, isAdmin } = defineProps<PropsType>();
+
+const emits = defineEmits<{
+  (e: 'on-close'): void;
+  (e: 'on-remove-participant', id: string): void;
+}>();
+
+const handleClose = () => {
+  emits('on-close');
+};
+
+const handleRemoveParticipant = (id: string) => {
+  emits('on-remove-participant', id);
+};
 </script>
 <template>
-  <BottomSheet :is-open="isOpen" :on-close="onClose">
+  <BottomSheet :is-open="isOpen" @on-close="handleClose">
     <div class="px-8 flex flex-wrap justify-center mb-2">
       <div
         v-for="[id, participant] in Object.entries(participants)"
@@ -33,7 +37,7 @@ const {
         </span>
         <span
           v-if="isAdmin && userId !== id"
-          @click="onRemoveParticipant(id)"
+          @click="handleRemoveParticipant(id)"
           class="ml-1 mr-2 cursor-pointer"
         >
           <v-icon

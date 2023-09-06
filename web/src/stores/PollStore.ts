@@ -30,7 +30,7 @@ type StateShape = {
   isLoading: boolean;
 };
 
-const usePollStore = defineStore("PollStore", {
+export const usePollStore = defineStore("PollStore", {
   state: (): StateShape => ({
     poll: null,
     me: null,
@@ -121,9 +121,9 @@ const usePollStore = defineStore("PollStore", {
       this.poll = poll;
     },
 
-    removeParticipant(_id: string) {},
+    removeParticipant(_id: string) { },
 
-    removeNomination(_id: string) {},
+    removeNomination(_id: string) { },
 
     nominate(text: string) {
       const poll = this.poll!;
@@ -135,8 +135,8 @@ const usePollStore = defineStore("PollStore", {
       this.poll = poll;
     },
 
-    cancelPoll() {},
-    closePoll() {},
+    cancelPoll() { },
+    closePoll() { },
 
     submitRankings(rankings: string[]) {
       // TODO: mock
@@ -167,4 +167,3 @@ const usePollStore = defineStore("PollStore", {
   },
 });
 
-export { usePollStore };

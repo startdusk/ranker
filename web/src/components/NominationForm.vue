@@ -1,46 +1,54 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref } from 'vue';
 
-import { Nominations } from "../poll-types";
-import BottomSheet from "./ui/BottomSheet.vue";
+import { Nominations } from '../poll-types';
+import BottomSheet from './ui/BottomSheet.vue';
 
 type PropsType = {
   isOpen: boolean;
-  onClose: () => void;
   title?: string;
   nominations?: Nominations;
   userId?: string;
   isAdmin: boolean;
-  onSubmitNomination: (nomination: string) => void;
-  onRemoveNomination: (nominationId: string) => void;
 };
 
 const {
   isOpen,
-  onClose,
   title,
   nominations = {},
   userId,
   isAdmin,
-  onSubmitNomination,
-  onRemoveNomination,
 } = defineProps<PropsType>();
 
-const nominationText = ref("");
+const emits = defineEmits<{
+  (e: 'on-close'): void;
+  (e: 'on-submit-nomination', nomination: string): void;
+  (e: 'on-remove-nomination', nominationId: string): void;
+}>();
+
+const nominationText = ref('');
 
 const handleSubmitNomination = () => {
-  onSubmitNomination(nominationText.value);
-  nominationText.value = "";
+  emits('on-submit-nomination', nominationText.value);
+  nominationText.value = '';
+};
+
+const handleRemoveNomination = (nominationId: string) => {
+  emits('on-remove-nomination', nominationId);
 };
 
 const getBoxStyle = (id: string): string => {
   return id === userId
-    ? "bg-orange-100 flex-row"
-    : "bg-gray-100 flex-row-reverse";
+    ? 'bg-orange-100 flex-row'
+    : 'bg-gray-100 flex-row-reverse';
+};
+
+const handleClose = () => {
+  emits('on-close');
 };
 </script>
 <template>
-  <BottomSheet :is-open="isOpen" :on-close="onClose">
+  <BottomSheet :is-open="isOpen" @on-close="handleClose">
     <div class="flex flex-col px-4 items-center mb-2">
       <h3 class="font-semibold">{{ title }}</h3>
       <div class="w-full my-4">
@@ -72,7 +80,7 @@ const getBoxStyle = (id: string): string => {
             <v-icon
               name="md-cancel"
               class="fill-current cursor-pointer hover:opacity-80"
-              @click="onRemoveNomination(nominationId)"
+              @click="handleRemoveNomination"
             />
           </div>
         </div>

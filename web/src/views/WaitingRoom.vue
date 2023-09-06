@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import { ref, watchEffect } from "vue";
-import { useRouter } from "vue-router";
-import copy from "copy-to-clipboard";
+import { ref, watchEffect } from 'vue';
+import { useRouter } from 'vue-router';
+import copy from 'copy-to-clipboard';
 
-import { usePollStore } from "../stores/PollStore";
+import { usePollStore } from '../stores/PollStore';
 
-import ColorizeText from "../components/ui/ColorizeText.vue";
-import ComfirmationDialog from "../components/ui/ConfirmationDialog.vue";
-import ParticipantList from "../components/ParticipantList.vue";
-import NominationForm from "../components/NominationForm.vue";
+import ColorizeText from '../components/ui/ColorizeText.vue';
+import ComfirmationDialog from '../components/ui/ConfirmationDialog.vue';
+import ParticipantList from '../components/ParticipantList.vue';
+import NominationForm from '../components/NominationForm.vue';
 
-import { AppPage } from "../router/page";
+import { AppPage } from '../router/page';
 
 const showConfirmation = ref(false);
 const isConfirmationOpen = ref(false);
-const confirmationMessage = ref("");
+const confirmationMessage = ref('');
 const participantToRemove = ref<string>();
 const isNominationFormOpen = ref(false);
 const isParticipantListOpen = ref(false);
@@ -113,7 +113,7 @@ const confirmRemoveParticipant = (id: string) => {
           <div class="my-2 italic">
             Waiting for Admin,
             <span class="font-semibold">
-              {{ " " + pollStore.participant }}
+              {{ ' ' + pollStore.participant }}
             </span>
             , to start the voting.
           </div>
@@ -125,36 +125,36 @@ const confirmRemoveParticipant = (id: string) => {
         <ComfirmationDialog
           message="You'll be kicked out of the poll"
           :show-dialog="showConfirmation"
-          :on-cancel="cancelLeavePoll"
-          :on-confirm="confirmLeavePoll"
+          @on-cancel="cancelLeavePoll"
+          @on-confirm="confirmLeavePoll"
         />
       </div>
     </div>
     <ParticipantList
       :is-open="isParticipantListOpen"
-      :on-close="closeParticipantList"
       :participants="pollStore.poll?.participants"
       :is-admin="pollStore.isAdmin || false"
       :user-id="pollStore.me?.id"
-      :on-remove-participant="confirmRemoveParticipant"
+      @on-close="closeParticipantList"
+      @on-remove-participant="confirmRemoveParticipant"
     />
     <NominationForm
       :title="pollStore.poll.topic"
       :is-open="isNominationFormOpen"
-      :on-close="() => (isNominationFormOpen = false)"
       :nominations="pollStore.poll.nominations"
       :user-id="pollStore.me?.id"
       :is-admin="pollStore.isAdmin || false"
-      :on-submit-nomination="(text) => pollStore.nominate(text)"
-      :on-remove-nomination="
+      @on-close="() => (isNominationFormOpen = false)"
+      @on-submit-nomination="(text) => pollStore.nominate(text)"
+      @on-remove-nomination="
         (nominationId) => pollStore.removeNomination(nominationId)
       "
     />
     <ComfirmationDialog
       :message="confirmationMessage"
       :show-dialog="isConfirmationOpen"
-      :on-cancel="() => (isConfirmationOpen = false)"
-      :on-confirm="submitRemoveParticipant"
+      @on-cancel="() => (isConfirmationOpen = false)"
+      @on-confirm="submitRemoveParticipant"
     />
   </div>
 </template>

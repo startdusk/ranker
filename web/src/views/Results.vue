@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref } from 'vue';
 
-import ConfirmationDialog from "../components/ui/ConfirmationDialog.vue";
-import ResultCard from "../components/ui/ResultCard.vue";
-import { usePollStore } from "../stores/PollStore";
-import { useRouter } from "vue-router";
-import { AppPage } from "../router/page";
+import ConfirmationDialog from '../components/ui/ConfirmationDialog.vue';
+import ResultCard from '../components/ui/ResultCard.vue';
+import { usePollStore } from '../stores/PollStore';
+import { useRouter } from 'vue-router';
+import { AppPage } from '../router/page';
 
 const router = useRouter();
 const pollStore = usePollStore();
@@ -66,12 +66,12 @@ const handleLeavePoll = () => {
       v-if="pollStore.isAdmin"
       message="Are you sure close the poll and calculate the results?"
       :show-dialog="isConfirmationOpen"
-      :on-cancel="
+      @on-cancel="
         () => {
           isConfirmationOpen = false;
         }
       "
-      :on-confirm="
+      @on-confirm="
         () => {
           pollStore.closePoll();
           isConfirmationOpen = false;
@@ -82,12 +82,12 @@ const handleLeavePoll = () => {
       v-if="isLeavePollOpen"
       message="You'll lose ya results. Dat alright?"
       :show-dialog="isLeavePollOpen"
-      :on-cancel="
+      @on-cancel="
         () => {
           isLeavePollOpen = false;
         }
       "
-      :on-confirm="handleLeavePoll"
+      @on-confirm="handleLeavePoll"
     />
   </div>
 </template>

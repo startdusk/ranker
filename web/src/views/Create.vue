@@ -1,27 +1,27 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { computed, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-import { usePollStore } from "../stores/PollStore";
+import { usePollStore } from '../stores/PollStore';
 
-import CountSelector from "../components/ui/CountSelector.vue";
-import { AppPage } from "../router/page";
-import { Poll } from "../poll-types";
-import { sleep } from "../utils";
+import CountSelector from '../components/ui/CountSelector.vue';
+import { AppPage } from '../router/page';
+import { Poll } from '../poll-types';
+import { sleep } from '../utils';
 
 const pollStore = usePollStore();
 const router = useRouter();
 
-const pollTopic = ref("");
+const pollTopic = ref('');
 const maxVotes = ref(3);
-const enterName = ref("");
-const apiError = ref("");
+const enterName = ref('');
+const apiError = ref('');
 
 const onChange = (val: number) => {
   maxVotes.value = val;
 };
 
-const areFieldsInvalid = (): boolean => {
+const areFieldsInvalid = computed((): boolean => {
   if (pollTopic.value.length < 1 || pollTopic.value.length > 100) {
     return true;
   }
@@ -33,32 +33,32 @@ const areFieldsInvalid = (): boolean => {
   }
 
   return false;
-};
+});
 
 const handleCreatePoll = async () => {
   pollStore.startLoading();
   const poll: Poll = {
-    id: "5VMI2V",
+    id: '5VMI2V',
     topic: pollTopic.value,
     votesPerVoter: maxVotes.value,
     participants: {
-      W4yUKVfIu00ibMwlpiEHM: "this is my participanis",
-      "user-id1": "user 1 post a participants",
-      "user-id2": "user 2 post a participants",
+      W4yUKVfIu00ibMwlpiEHM: 'this is my participanis',
+      'user-id1': 'user 1 post a participants',
+      'user-id2': 'user 2 post a participants',
     },
-    adminId: "W4yUKVfIu00ibMwlpiEHM",
+    adminId: 'W4yUKVfIu00ibMwlpiEHM',
     nominations: {
       nomination_id1: {
-        userId: "W4yUKVfIu00ibMwlpiEHM",
-        text: "hello world",
+        userId: 'W4yUKVfIu00ibMwlpiEHM',
+        text: 'hello world',
       },
       nomination_id2: {
-        userId: "user-id1",
-        text: "nooooooooooooooooooooooo",
+        userId: 'user-id1',
+        text: 'nooooooooooooooooooooooo',
       },
       nomination_id3: {
-        userId: "user-id2",
-        text: "booooooooooooooooooooooo",
+        userId: 'user-id2',
+        text: 'booooooooooooooooooooooo',
       },
     },
     rankings: {},
@@ -66,7 +66,7 @@ const handleCreatePoll = async () => {
     hasStarted: false,
   };
   pollStore.initializePoll(poll);
-  await sleep(3000);
+  await sleep(1000);
   router.push(AppPage.WaitingRoom);
   pollStore.stopLoading();
 };
@@ -87,7 +87,7 @@ const handleCreatePoll = async () => {
           :max="5"
           :initial="3"
           :step="1"
-          :onChange="onChange"
+          @on-change="onChange"
         />
       </div>
       <div class="mb-12">
@@ -103,7 +103,7 @@ const handleCreatePoll = async () => {
     <div class="flex flex-col justify-center items-center">
       <button
         class="box btn-orange w-32 my-2"
-        :disabled="areFieldsInvalid()"
+        :disabled="areFieldsInvalid"
         @click="handleCreatePoll"
       >
         Create

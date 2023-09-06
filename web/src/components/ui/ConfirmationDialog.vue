@@ -2,11 +2,22 @@
 type PropsType = {
   message: string;
   showDialog: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
 };
 
-const { message, showDialog, onCancel, onConfirm } = defineProps<PropsType>();
+const { message, showDialog } = defineProps<PropsType>();
+
+const emits = defineEmits<{
+  (e: 'on-cancel'): void;
+  (e: 'on-confirm'): void;
+}>();
+
+const handleCancel = () => {
+  emits('on-cancel');
+};
+
+const handleConfirm = () => {
+  emits('on-confirm');
+};
 </script>
 <template>
   <div
@@ -18,8 +29,8 @@ const { message, showDialog, onCancel, onConfirm } = defineProps<PropsType>();
     >
       <div class="text-center font-semibold mb-6">{{ message }}</div>
       <div class="flex justify-around my-2">
-        <button class="boxless" @click="onCancel">Cancel</button>
-        <button class="box btn-purple" @click="onConfirm">Confirm</button>
+        <button class="boxless" @click="handleCancel">Cancel</button>
+        <button class="box btn-purple" @click="handleConfirm">Confirm</button>
       </div>
     </div>
   </div>

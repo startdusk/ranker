@@ -1,10 +1,16 @@
 <script setup lang="ts">
 type PropsType = {
   isOpen: boolean;
-  onClose?: () => void;
 };
 
-const { isOpen = false, onClose } = defineProps<PropsType>();
+const { isOpen = false } = defineProps<PropsType>();
+const emits = defineEmits<{
+  (e: 'on-close'): void;
+}>();
+
+const handleClose = () => {
+  emits('on-close');
+};
 </script>
 <template>
   <transition name="slide-fade" :duration="300">
@@ -16,7 +22,7 @@ const { isOpen = false, onClose } = defineProps<PropsType>();
         <v-icon
           name="md-cancel"
           class="mr-2 mt-2 fill-current text-orange-700 cursor-pointer hover:opacity-80"
-          @click="onClose"
+          @click="handleClose"
         />
       </div>
       <div class="relative overflow-y-hidden bg-gray-50 flex-grow">

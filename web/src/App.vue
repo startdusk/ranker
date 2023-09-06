@@ -1,20 +1,21 @@
 <script setup lang="ts">
-import { ref, watchEffect } from "vue";
-import { useEventSource } from "@vueuse/core";
-import { NoticeBar } from "vant";
+import { ref, watchEffect } from 'vue';
+import { useEventSource } from '@vueuse/core';
+import { NoticeBar } from 'vant';
 
-import Loader from "./components/ui/Loader.vue";
-import SnackBar from "./components/ui/SnackBar.vue";
-import Pages from "./Pages.vue";
+import Loader from './components/ui/Loader.vue';
+import SnackBar from './components/ui/SnackBar.vue';
+import Pages from './Pages.vue';
 
-import { usePollStore } from "./stores/PollStore";
-import { getTokenPayload, sleep } from "./utils";
-import { NotificationMessage } from "./poll-types";
-import { useRouter } from "vue-router";
-import { AppPage } from "./router/page";
+import { usePollStore } from './stores/PollStore';
+import { getTokenPayload, sleep } from './utils';
+import { NotificationMessage } from './poll-types';
+import { useRoute, useRouter } from 'vue-router';
+import { AppPage } from './router/page';
+import { computed } from 'vue';
 
 const router = useRouter();
-const { data } = useEventSource("http://localhost:3000/sse");
+const { data } = useEventSource(import.meta.env.VITE_APP_SSE_URL);
 const state = usePollStore();
 const notifyMessage = ref<NotificationMessage | null>(null);
 watchEffect(() => {
@@ -23,8 +24,16 @@ watchEffect(() => {
   }
 });
 
+const route = useRoute();
+const showNoticeBar = computed(() => {
+  const pathname = route.path.substring(1);
+  return (
+    (pathname === AppPage.Welcome || pathname === AppPage.Create) && data.value
+  );
+});
+
 watchEffect(async () => {
-  console.log("App useEffect - check token and send to proper page");
+  console.log('App useEffect - check token and send to proper page');
 
   state.startLoading();
   // const accessToken = localStorage.getItem("accessToken");
@@ -71,12 +80,12 @@ const hanldeJoinPoll = (pollId: string) => {
 <template>
   <Loader :isLoading="state.isLoading" color="orange" :width="120" />
   <NoticeBar
-    v-if="notifyMessage"
+    v-if="showNoticeBar"
     left-icon="volume-o"
-    @click="hanldeJoinPoll(notifyMessage.poll_id)"
+    @click="hanldeJoinPoll(notifyMessage?.poll_id!)"
   >
     user {{ notifyMessage?.username }} create a vote
-    <span class="font-mono text-blue-500">
+    <span class="font-mono text-blue-500 underline">
       {{ notifyMessage?.topic }}
     </span>
     , click for join the vote
@@ -93,5 +102,3 @@ const hanldeJoinPoll = (pollId: string) => {
   />
   <Pages />
 </template>
-
-<style scoped></style>

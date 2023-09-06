@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue';
+import { computed, ref } from 'vue';
 
 type PropsType = {
   min: number;
   max: number;
   step: number;
   initial: number;
-  onChange: (val: number) => void;
 };
 
-let { min, max, step, initial, onChange } = defineProps<PropsType>();
+let { min, max, step, initial } = defineProps<PropsType>();
+const emits = defineEmits<{
+  (e: 'on-change', val: number): void;
+}>();
 
 if (initial < min || initial > max) {
   console.warn(
@@ -21,24 +23,22 @@ if (initial < min || initial > max) {
 
 const current = ref(initial);
 
-watchEffect(() => {
-  onChange(current.value);
+const minusDisable = computed(() => {
+  return current.value - step < min;
 });
 
-const minusDisable = () => {
-  return current.value - step < min;
-};
-
-const plusDisable = () => {
+const plusDisable = computed(() => {
   return current.value + step > max;
-};
+});
 
 const handleMinusClick = () => {
   current.value -= step;
+  emits('on-change', current.value);
 };
 
 const handlePlusClick = () => {
   current.value += step;
+  emits('on-change', current.value);
 };
 </script>
 <template>
@@ -46,7 +46,7 @@ const handlePlusClick = () => {
     <button
       type="button"
       class="btn-round btn-round-orange"
-      :disabled="minusDisable()"
+      :disabled="minusDisable"
       @click="handleMinusClick"
     >
       -
@@ -55,7 +55,7 @@ const handlePlusClick = () => {
     <button
       type="button"
       class="btn-round btn-round-orange"
-      :disabled="plusDisable()"
+      :disabled="plusDisable"
       @click="handlePlusClick"
     >
       +

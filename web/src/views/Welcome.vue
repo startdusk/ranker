@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AppPage } from "../router/page";
+import { AppPage } from '../router/page';
 </script>
 <template>
   <div class="flex flex-col justify-center items-center h-full">
@@ -14,5 +14,3 @@ import { AppPage } from "../router/page";
     </div>
   </div>
 </template>
-
-<style></style>
