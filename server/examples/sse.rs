@@ -54,7 +54,7 @@ async fn main() -> anyhow::Result<()> {
             let _ = sse_tx.send(Notification {
                 notify_type: NotifyType::JoinPoll,
                 username: nanoid!(10),
-                poll_id: nanoid!(5),
+                poll_id: nanoid!(6),
                 topic: nanoid!(8),
             });
         }
